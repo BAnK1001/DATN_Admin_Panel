@@ -70,7 +70,7 @@ class _MainScreenState extends State<MainScreen> {
   logout() async {
     await FirebaseAuth.instance.signOut();
     Timer(
-      const Duration(seconds: 2),
+      const Duration(seconds: 1),
       () => Navigator.of(context).pushNamedAndRemoveUntil(
         RouteManager.entryScreen,
         (route) => false,
@@ -163,8 +163,6 @@ class _MainScreenState extends State<MainScreen> {
                       leading: MouseRegion(
                         cursor: SystemMouseCursors.click,
                         child: GestureDetector(
-                          onTap: () => Navigator.of(context)
-                              .pushNamed(RouteManager.profileScreen),
                           child: Column(
                             children: [
                               user.photoURL != null

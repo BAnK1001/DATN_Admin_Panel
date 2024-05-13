@@ -129,7 +129,7 @@ class _UsersScreenState extends State<UsersScreen> {
                     DataColumn(
                       label: Text('Name'),
                     ),
-                    DataColumn(label: Text('Image')),
+                    DataColumn(label: Text('Avatar')),
                     DataColumn(label: Text('Phone')),
                     DataColumn(label: Text('Email Address')),
                     DataColumn(label: Text('Address')),

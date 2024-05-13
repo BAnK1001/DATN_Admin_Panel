@@ -134,7 +134,7 @@ class _VendorsScreenState extends State<VendorsScreen> {
                     DataColumn(
                       label: Text('Name'),
                     ),
-                    DataColumn(label: Text('Image')),
+                    DataColumn(label: Text('Avatar')),
                     DataColumn(label: Text('City')),
                     DataColumn(label: Text('State')),
                     DataColumn(label: Text('Country')),
