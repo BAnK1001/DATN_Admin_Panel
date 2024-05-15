@@ -22,16 +22,12 @@ class _OrdersScreenState extends State<OrdersScreen> {
   Stream<QuerySnapshot> ordersStream =
       FirebaseFirestore.instance.collection('orders').snapshots();
 
-  final _verticalScrollController = ScrollController();
-  final _horizontalScrollController = ScrollController();
+  final ScrollController _scrollController = ScrollController();
 
   // called after alert for dismissal
   doneWithAction() {
     Navigator.of(context).pop();
   }
-
-  // return context
-  get cxt => context;
 
   // delete order
   Future<void> deleteOrder(String id) async {
@@ -44,8 +40,8 @@ class _OrdersScreenState extends State<OrdersScreen> {
         .delete()
         .whenComplete(() {
       kCoolAlert(
-        message: 'You have successfully set the deleted order',
-        context: cxt,
+        message: 'You have successfully deleted the order',
+        context: context,
         alert: CoolAlertType.success,
         action: doneWithAction,
       );
@@ -65,7 +61,7 @@ class _OrdersScreenState extends State<OrdersScreen> {
   void deleteDialog(String id) {
     areYouSureDialog(
       title: 'Delete order',
-      content: 'Are you sure you want to delete order?',
+      content: 'Are you sure you want to delete this order?',
       context: context,
       action: deleteOrder,
       isIdInvolved: true,
@@ -95,172 +91,137 @@ class _OrdersScreenState extends State<OrdersScreen> {
             ],
           ),
           const SizedBox(height: 10),
-          StreamBuilder<QuerySnapshot>(
-            stream: ordersStream,
-            builder: (context, AsyncSnapshot<QuerySnapshot> snapshot) {
-              if (snapshot.hasError) {
-                const Center(
-                  child: Text('Error occurred!'),
-                );
-              }
+          Expanded(
+            child: StreamBuilder<QuerySnapshot>(
+              stream: ordersStream,
+              builder: (context, AsyncSnapshot<QuerySnapshot> snapshot) {
+                if (snapshot.hasError) {
+                  return const Center(child: Text('Error occurred!'));
+                }
 
-              if (snapshot.connectionState == ConnectionState.waiting) {
-                const Center(
-                  child: LoadingWidget(),
-                );
-              }
+                if (snapshot.connectionState == ConnectionState.waiting) {
+                  return const Center(child: LoadingWidget());
+                }
 
-              if (!snapshot.hasData || snapshot.data == null) {
-                ErrorWidget.builder =
-                    (FlutterErrorDetails details) => const Center(
-                          child: LoadingWidget(),
-                        );
-              }
+                if (!snapshot.hasData ||
+                    snapshot.data == null ||
+                    snapshot.data!.docs.isEmpty) {
+                  return Center(
+                    child: Image.asset(AssetManager.noImagePlaceholderImg),
+                  );
+                }
 
-              if (snapshot.data!.docs.isEmpty) {
-                Center(
-                  child: Image.asset(AssetManager.noImagePlaceholderImg),
-                );
-              }
+                List<DocumentSnapshot> sortedDocs = snapshot.data!.docs;
+                sortedDocs.sort((a, b) => b['date'].compareTo(a['date']));
 
-              return ScrollComponent(
-                horizontalScrollController: _horizontalScrollController,
-                verticalScrollController: _verticalScrollController,
-                child: DataTable(
-                  showBottomBorder: true,
-                  headingRowColor:
-                      MaterialStateColor.resolveWith((states) => primaryColor),
-                  headingTextStyle: const TextStyle(color: Colors.white),
-                  dataRowHeight: 60,
-                  columns: const [
-                    DataColumn(label: Text('Customer Name')),
-                    DataColumn(label: Text('Vendor Name')),
-                    DataColumn(label: Text('Product Image')),
-                    DataColumn(label: Text('Product Name')),
-                    DataColumn(label: Text('Price')),
-                    DataColumn(label: Text('Quantity')),
-                    DataColumn(label: Text('Product Size')),
-                    DataColumn(label: Text('Date')),
-                    DataColumn(label: Text('Action')),
-                    DataColumn(label: Text('Action')),
-                  ],
-                  rows: snapshot.data!.docs.map(
-                    (item) {
-                      return DataRow(
-                        cells: [
-                          // customer
-                          DataCell(
-                            FutureBuilder<String>(
-                              future: FirebaseFirestore.instance
-                                  .collection('customers')
-                                  .doc(item['customerId'])
-                                  .get()
-                                  .then(
-                                    (DocumentSnapshot doc) => doc['fullname'],
-                                  ),
-                              builder: (context, snapshot) {
-                                if (snapshot.hasError) {
-                                  return const Text('Error occurred!');
-                                }
-
-                                if (snapshot.connectionState ==
-                                    ConnectionState.waiting) {
-                                  if (!snapshot.hasData ||
-                                      snapshot.data == null) {
-                                    ErrorWidget.builder =
-                                        (FlutterErrorDetails details) =>
-                                            const Center(
-                                              child: LoadingWidget(),
-                                            );
-                                  }
-                                }
-
-                                return Text(snapshot.data ?? '');
-                              },
-                            ),
+                return ListView.builder(
+                  controller: _scrollController,
+                  itemCount: sortedDocs.length,
+                  itemBuilder: (context, index) {
+                    var item = sortedDocs[index];
+                    return Card(
+                      margin:
+                          EdgeInsets.symmetric(vertical: 10, horizontal: 16),
+                      child: ListTile(
+                        leading: ClipRRect(
+                          borderRadius: BorderRadius.circular(10),
+                          child: Image.network(
+                            item['prodImg'],
+                            width: 50,
                           ),
-
-                          //vendor
-                          DataCell(
+                        ),
+                        title: FutureBuilder<String>(
+                          future: FirebaseFirestore.instance
+                              .collection('customers')
+                              .doc(item['customerId'])
+                              .get()
+                              .then((DocumentSnapshot doc) => doc['fullname']),
+                          builder: (context, snapshot) {
+                            if (snapshot.hasError) {
+                              return const Text('Error occurred!');
+                            }
+                            if (snapshot.connectionState ==
+                                ConnectionState.waiting) {
+                              return const Text('Loading...');
+                            }
+                            return Text(snapshot.data ?? '',
+                                style: getMediumStyle(
+                                    color: Colors.black,
+                                    fontSize: FontSize.s16));
+                          },
+                        ),
+                        subtitle: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
                             FutureBuilder<String>(
                               future: FirebaseFirestore.instance
                                   .collection('vendors')
                                   .doc(item['vendorId'])
                                   .get()
-                                  .then(
-                                    (DocumentSnapshot doc) => doc['storeName'],
-                                  ),
+                                  .then((DocumentSnapshot doc) =>
+                                      doc['storeName']),
                               builder: (context, snapshot) {
                                 if (snapshot.hasError) {
                                   return const Text('Error occurred!');
                                 }
-
                                 if (snapshot.connectionState ==
                                     ConnectionState.waiting) {
-                                  if (!snapshot.hasData ||
-                                      snapshot.data == null) {
-                                    ErrorWidget.builder =
-                                        (FlutterErrorDetails details) =>
-                                            const Center(
-                                              child: LoadingWidget(),
-                                            );
-                                  }
+                                  return const Text('Loading...');
                                 }
-
-                                return Text(snapshot.data ?? '');
+                                return Text(snapshot.data ?? '',
+                                    style: getMediumStyle(
+                                        color: Colors.black,
+                                        fontSize: FontSize.s14));
                               },
                             ),
-                          ),
-
-                          DataCell(
-                            ClipRRect(
-                              borderRadius: BorderRadius.circular(10),
-                              child: Image.network(
-                                item['prodImg'],
-                                width: 50,
-                              ),
-                            ),
-                          ),
-                          DataCell(Text('${item['prodName']}')),
-                          DataCell(Text('\$${item['prodPrice']}')),
-                          DataCell(Text('${item['prodQuantity']}')),
-                          DataCell(Text('${item['prodSize']}')),
-                          DataCell(
+                            Text('${item['prodName']}',
+                                style: getRegularStyle(
+                                    color: Colors.black54,
+                                    fontSize: FontSize.s12)),
+                            Text('\$${item['prodPrice']}',
+                                style: getRegularStyle(
+                                    color: Colors.black54,
+                                    fontSize: FontSize.s12)),
+                            Text('Quantity: ${item['prodQuantity']}',
+                                style: getRegularStyle(
+                                    color: Colors.black54,
+                                    fontSize: FontSize.s12)),
+                            Text('Size: ${item['prodSize']}',
+                                style: getRegularStyle(
+                                    color: Colors.black54,
+                                    fontSize: FontSize.s12)),
                             Text(
-                              intl.DateFormat.yMMMEd()
-                                  .format(item['date'].toDate()),
-                            ),
-                          ),
-                          DataCell(
-                            ElevatedButton(
-                              style: ElevatedButton.styleFrom(
-                                backgroundColor: item['isApproved']
-                                    ? primaryColor
-                                    : accentColor,
-                              ),
+                                intl.DateFormat.yMMMEd()
+                                    .format(item['date'].toDate()),
+                                style: getRegularStyle(
+                                    color: Colors.black54,
+                                    fontSize: FontSize.s12)),
+                          ],
+                        ),
+                        trailing: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            IconButton(
+                              icon: Icon(Icons.check_circle,
+                                  color: item['isApproved']
+                                      ? primaryColor
+                                      : accentColor),
                               onPressed: () => toggleApproval(
-                                item['orderId'],
-                                item['isApproved'],
-                              ),
-                              child: Text(
-                                item['isApproved'] ? 'Reject' : 'Approve',
-                              ),
+                                  item['orderId'], item['isApproved']),
                             ),
-                          ),
-                          DataCell(
-                            ElevatedButton(
+                            IconButton(
+                              icon: Icon(Icons.delete, color: Colors.red),
                               onPressed: () => deleteDialog(item['orderId']),
-                              child: const Text('Delete'),
                             ),
-                          ),
-                        ],
-                      );
-                    },
-                  ).toList(),
-                ),
-              );
-            },
-          )
+                          ],
+                        ),
+                      ),
+                    );
+                  },
+                );
+              },
+            ),
+          ),
         ],
       ),
     );

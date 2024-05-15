@@ -1,15 +1,12 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:cool_alert/cool_alert.dart';
 import 'package:flutter/material.dart';
-
-import '../../../constants/color.dart';
+import 'package:shoes_shop_admin/views/widgets/are_you_sure_dialog.dart';
+import 'package:shoes_shop_admin/views/widgets/kcool_alert.dart';
+import 'package:shoes_shop_admin/views/widgets/loading_widget.dart';
 import '../../../resources/assets_manager.dart';
 import '../../../resources/font_manager.dart';
 import '../../../resources/styles_manager.dart';
-import '../../components/scroll_component.dart';
-import '../../widgets/are_you_sure_dialog.dart';
-import '../../widgets/kcool_alert.dart';
-import '../../widgets/loading_widget.dart';
 
 class UsersScreen extends StatefulWidget {
   const UsersScreen({Key? key}) : super(key: key);
@@ -19,47 +16,38 @@ class UsersScreen extends StatefulWidget {
 }
 
 class _UsersScreenState extends State<UsersScreen> {
-  // stream
-  Stream<QuerySnapshot> customersStream =
-      FirebaseFirestore.instance.collection('customers').snapshots();
+  final ScrollController _scrollController = ScrollController();
+  final TextEditingController _searchController = TextEditingController();
+  late Stream<QuerySnapshot> _usersStream;
 
-  final _verticalScrollController = ScrollController();
-  final _horizontalScrollController = ScrollController();
-
-  // called after alert for dismissal
-  doneWithAction() {
-    Navigator.of(context).pop();
+  @override
+  void initState() {
+    super.initState();
+    _usersStream =
+        FirebaseFirestore.instance.collection('customers').snapshots();
   }
 
-  // return context
-  get cxt => context;
-
-  // delete order
-  Future<void> deleteCustomer(String id) async {
-    //pop out
-    doneWithAction();
-
+  Future<void> _deleteCustomer(String id) async {
     await FirebaseFirestore.instance
         .collection('customers')
         .doc(id)
         .delete()
         .whenComplete(() {
       kCoolAlert(
-        message: 'You have successfully set the deleted user',
-        context: cxt,
+        message: 'You have successfully deleted the user',
+        context: context,
         alert: CoolAlertType.success,
-        action: doneWithAction,
+        action: () => Navigator.of(context).pop(),
       );
     });
   }
 
-  // delete dialog
-  void deleteDialog(String id) {
+  void _showDeleteDialog(String id) {
     areYouSureDialog(
-      title: 'Delete customer',
-      content: 'Are you sure you want to delete customer?',
+      title: 'Delete Customer',
+      content: 'Are you sure you want to delete this customer?',
       context: context,
-      action: deleteCustomer,
+      action: _deleteCustomer,
       isIdInvolved: true,
       id: id,
     );
@@ -79,94 +67,116 @@ class _UsersScreenState extends State<UsersScreen> {
               const SizedBox(width: 10),
               Text(
                 'Users',
-                style: getMediumStyle(
-                  color: Colors.black,
-                  fontSize: FontSize.s16,
-                ),
+                style:
+                    getMediumStyle(color: Colors.black, fontSize: FontSize.s16),
               ),
             ],
           ),
           const SizedBox(height: 10),
-          StreamBuilder<QuerySnapshot>(
-            stream: customersStream,
-            builder: (context, AsyncSnapshot<QuerySnapshot> snapshot) {
-              if (snapshot.hasError) {
-                const Center(
-                  child: Text('Error occurred!'),
-                );
-              }
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16),
+            child: TextField(
+              controller: _searchController,
+              decoration: InputDecoration(
+                hintText: 'Search users...',
+                contentPadding: const EdgeInsets.all(10),
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(30),
+                  borderSide: BorderSide.none,
+                ),
+                filled: true,
+                fillColor: Colors.grey[200],
+                suffixIcon: IconButton(
+                  icon: const Icon(Icons.clear),
+                  onPressed: () => _searchController.clear(),
+                ),
+              ),
+              onChanged: (value) {
+                setState(() {
+                  _usersStream = FirebaseFirestore.instance
+                      .collection('customers')
+                      .where('fullname', isGreaterThanOrEqualTo: value)
+                      .where('fullname', isLessThan: value + 'z')
+                      .snapshots();
+                });
+              },
+            ),
+          ),
+          const SizedBox(height: 10),
+          Expanded(
+            child: StreamBuilder<QuerySnapshot>(
+              stream: _usersStream,
+              builder: (context, AsyncSnapshot<QuerySnapshot> snapshot) {
+                if (snapshot.hasError) {
+                  return const Center(child: Text('Error occurred!'));
+                }
 
-              if (snapshot.connectionState == ConnectionState.waiting) {
-                const Center(
-                  child: LoadingWidget(),
-                );
-              }
+                if (snapshot.connectionState == ConnectionState.waiting) {
+                  return const Center(child: LoadingWidget());
+                }
 
-              if (!snapshot.hasData || snapshot.data == null) {
-                ErrorWidget.builder =
-                    (FlutterErrorDetails details) => const Center(
-                          child: LoadingWidget(),
-                        );
-              }
+                if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
+                  return Center(
+                      child: Image.asset(AssetManager.noImagePlaceholderImg));
+                }
 
-              if (snapshot.data!.docs.isEmpty) {
-                Center(
-                  child: Image.asset(AssetManager.noImagePlaceholderImg),
-                );
-              }
+                List<DocumentSnapshot> sortedDocs = snapshot.data!.docs;
 
-              return ScrollComponent(
-                verticalScrollController: _verticalScrollController,
-                horizontalScrollController: _horizontalScrollController,
-                child: DataTable(
-                  showBottomBorder: true,
-                  headingRowColor: MaterialStateColor.resolveWith(
-                    (states) => primaryColor,
-                  ),
-                  headingTextStyle: const TextStyle(color: Colors.white),
-                  dataRowHeight: 60,
-                  columns: const [
-                    DataColumn(
-                      label: Text('Name'),
-                    ),
-                    DataColumn(label: Text('Avatar')),
-                    DataColumn(label: Text('Phone')),
-                    DataColumn(label: Text('Email Address')),
-                    DataColumn(label: Text('Address')),
-                    DataColumn(label: Text('Action')),
-                  ],
-                  rows: snapshot.data!.docs
-                      .map(
-                        (customer) => DataRow(
-                          cells: [
-                            DataCell(Text(customer['fullname'])),
-                            DataCell(
-                              ClipRRect(
-                                borderRadius: BorderRadius.circular(10),
-                                child: Image.network(
-                                  customer['image'],
-                                  width: 50,
-                                ),
-                              ),
+                return ListView.builder(
+                  controller: _scrollController,
+                  itemCount: sortedDocs.length,
+                  itemBuilder: (context, index) {
+                    var item = sortedDocs[index];
+                    return Card(
+                      margin: const EdgeInsets.symmetric(
+                          vertical: 10, horizontal: 16),
+                      child: ListTile(
+                        leading: ClipRRect(
+                          borderRadius: BorderRadius.circular(10),
+                          child: Image.network(
+                            item['image'],
+                            width: 50,
+                            height: 50,
+                            fit: BoxFit.cover,
+                          ),
+                        ),
+                        title: Text(
+                          item['fullname'],
+                          style: getMediumStyle(
+                              color: Colors.black, fontSize: FontSize.s16),
+                        ),
+                        subtitle: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              'Phone: ${item['phone']}',
+                              style: getMediumStyle(
+                                  color: Colors.black, fontSize: FontSize.s14),
                             ),
-                            DataCell(Text(customer['phone'])),
-                            DataCell(Text(customer['email'])),
-                            DataCell(Text(customer['address'])),
-                            DataCell(
-                              ElevatedButton(
-                                onPressed: () => deleteDialog(
-                                  customer['customerId'],
-                                ),
-                                child: const Text('Delete'),
-                              ),
+                            Text(
+                              'Email: ${item['email']}',
+                              style: getRegularStyle(
+                                  color: Colors.black54,
+                                  fontSize: FontSize.s12),
+                            ),
+                            Text(
+                              'Address: ${item['address']}',
+                              style: getRegularStyle(
+                                  color: Colors.black54,
+                                  fontSize: FontSize.s12),
                             ),
                           ],
                         ),
-                      )
-                      .toList(),
-                ),
-              );
-            },
+                        trailing: IconButton(
+                          icon: const Icon(Icons.delete, color: Colors.red),
+                          onPressed: () => _showDeleteDialog(item.id),
+                        ),
+                      ),
+                    );
+                  },
+                );
+              },
+            ),
           ),
         ],
       ),

@@ -6,14 +6,14 @@ import 'package:flutter/material.dart';
 import 'package:shoes_shop_admin/helpers/screen_size.dart';
 import 'package:shoes_shop_admin/views/widgets/are_you_sure_dialog.dart';
 import 'package:shoes_shop_admin/views/widgets/loading_widget.dart';
-import '../../../constants/color.dart';
-import '../../../resources/assets_manager.dart';
-import '../../../resources/font_manager.dart';
-import '../../../resources/styles_manager.dart';
 import 'package:file_picker/file_picker.dart';
+import 'package:flutter_easyloading/flutter_easyloading.dart';
+import 'package:shoes_shop_admin/resources/assets_manager.dart';
+import 'package:shoes_shop_admin/resources/styles_manager.dart';
+import 'package:shoes_shop_admin/constants/color.dart';
+import 'package:shoes_shop_admin/resources/font_manager.dart';
 import '../../components/grid_carousel_banners.dart';
 import '../../widgets/kcool_alert.dart';
-import 'package:flutter_easyloading/flutter_easyloading.dart';
 
 class CarouselBanners extends StatefulWidget {
   const CarouselBanners({Key? key}) : super(key: key);
@@ -40,13 +40,10 @@ class _CarouselBannersState extends State<CarouselBanners> {
     } else {
       setState(() {
         isImgSelected = true;
+        fileBytes = pickedImage.files.first.bytes;
+        fileName = pickedImage.files.first.name;
       });
     }
-
-    setState(() {
-      fileBytes = pickedImage.files.first.bytes;
-      fileName = pickedImage.files.first.name;
-    });
   }
 
   // reset picked image
@@ -146,18 +143,37 @@ class _CarouselBannersState extends State<CarouselBanners> {
     Size size = MediaQuery.of(context).size;
     return Scaffold(
       floatingActionButton: isImgSelected
-          ? FloatingActionButton(
+          ? FloatingActionButton.extended(
               backgroundColor: !isProcessing ? accentColor : Colors.grey,
               onPressed: () => !isProcessing ? uploadImg() : null,
-              child: const Icon(Icons.save),
+              icon: const Icon(Icons.save),
+              label: Text(
+                !isProcessing ? 'Upload' : 'Uploading...',
+                style: getMediumStyle(
+                  color: Colors.white,
+                  fontSize: FontSize.s16,
+                ),
+              ),
             )
-          : const SizedBox.shrink(),
+          : FloatingActionButton(
+              onPressed: selectImage,
+              backgroundColor: primaryColor,
+              child: const Icon(Icons.add_a_photo),
+            ),
       body: SingleChildScrollView(
         child: Padding(
-          padding: const EdgeInsets.all(8.0),
+          padding: const EdgeInsets.all(16.0),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
+              Text(
+                'Manage Carousel Banners',
+                style: getBoldStyle(
+                  color: primaryColor,
+                  fontSize: FontSize.s20,
+                ),
+              ),
+              const SizedBox(height: 20),
               Center(
                 child: Stack(
                   children: [
@@ -173,21 +189,23 @@ class _CarouselBannersState extends State<CarouselBanners> {
                           : Image.asset(
                               AssetManager.placeholderImg,
                               width: 150,
+                              height: 150,
+                              fit: BoxFit.cover,
                             ),
                     ),
                     Positioned(
-                      bottom: 5,
+                      bottom: 10,
                       right: 10,
                       child: MouseRegion(
                         cursor: SystemMouseCursors.click,
                         child: InkWell(
                           onTap: () => selectImage(),
                           child: CircleAvatar(
-                            backgroundColor: gridBg,
+                            backgroundColor: Colors.black54,
                             child: !isProcessing
                                 ? const Icon(
                                     Icons.photo,
-                                    color: accentColor,
+                                    color: Colors.white,
                                   )
                                 : const LoadingWidget(size: 30),
                           ),
@@ -197,16 +215,17 @@ class _CarouselBannersState extends State<CarouselBanners> {
                   ],
                 ),
               ),
-              const SizedBox(height: 10),
+              const SizedBox(height: 20),
               const Divider(color: boxBg, thickness: 1.5),
-              const SizedBox(height: 5),
+              const SizedBox(height: 10),
               Text(
                 'Carousel Banners',
                 style: getMediumStyle(
                   color: Colors.black,
-                  fontSize: FontSize.s16,
+                  fontSize: FontSize.s18,
                 ),
               ),
+              const SizedBox(height: 10),
               SizedBox(
                 height:
                     context.screenSize ? size.height / 2.5 : size.height / 2,

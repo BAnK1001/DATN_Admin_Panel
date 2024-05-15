@@ -17,107 +17,60 @@ class HomeScreen extends StatefulWidget {
 class _HomeScreenState extends State<HomeScreen> {
   final TextEditingController searchText = TextEditingController();
 
-  var orders = 0;
-  var cashOuts = 0;
-  var users = 0;
-  var categories = 0;
-  var vendors = 0;
-  var products = 0;
+  int orders = 0;
+  int cashOuts = 0;
+  int users = 0;
+  int categories = 0;
+  int vendors = 0;
+  int products = 0;
 
-  // chart sample data
   List<ChartSampleData> chartSampleData = [];
 
-  // fetch categories with product count
   Future<void> fetchCategoriesWithData() async {
-    List<String> categories = [];
+    final List<String> categories = [];
 
-    await FirebaseFirestore.instance
-        .collection('categories')
-        .get()
-        .then((QuerySnapshot snapshot) {
-      for (var doc in snapshot.docs) {
-        categories.add(doc['category']);
-      }
-    }).whenComplete(
-      () async {
-        for (var category in categories) {
-          int number = 0;
-          await FirebaseFirestore.instance
-              .collection('products')
-              .where('category', isEqualTo: category)
-              .get()
-              .then((QuerySnapshot snapshot) {
-            number = snapshot.docs.length;
-          });
+    final categorySnapshot =
+        await FirebaseFirestore.instance.collection('categories').get();
+    for (var doc in categorySnapshot.docs) {
+      categories.add(doc['category']);
+    }
 
-          setState(() {
-            chartSampleData.add(
-              ChartSampleData(
-                x: category,
-                y: number == 0 ? 0.1 : number,
-                text: category,
-              ),
-            );
-          });
-        }
-      },
-    );
+    for (var category in categories) {
+      final productSnapshot = await FirebaseFirestore.instance
+          .collection('products')
+          .where('category', isEqualTo: category)
+          .get();
+      final int number = productSnapshot.docs.length;
+
+      setState(() {
+        chartSampleData.add(
+          ChartSampleData(
+            x: category,
+            y: number == 0 ? 0.1 : number,
+            text: category,
+          ),
+        );
+      });
+    }
   }
 
   Future<void> fetchData() async {
-    // orders
-    await FirebaseFirestore.instance.collection('orders').get().then(
-          (QuerySnapshot data) => {
-            setState(() {
-              orders = data.docs.length;
-            }),
-          },
-        );
+    final collectionNames = {
+      'orders': (int value) => orders = value,
+      'products': (int value) => products = value,
+      'customers': (int value) => users = value,
+      'categories': (int value) => categories = value,
+      'cash_outs': (int value) => cashOuts = value,
+      'vendors': (int value) => vendors = value,
+    };
 
-    // products
-    await FirebaseFirestore.instance.collection('products').get().then(
-          (QuerySnapshot data) => {
-            setState(() {
-              products = data.docs.length;
-            }),
-          },
-        );
-
-    // users
-    await FirebaseFirestore.instance.collection('customers').get().then(
-          (QuerySnapshot data) => {
-            setState(() {
-              users = data.docs.length;
-            }),
-          },
-        );
-
-    // categories
-    await FirebaseFirestore.instance.collection('categories').get().then(
-          (QuerySnapshot data) => {
-            setState(() {
-              categories = data.docs.length;
-            }),
-          },
-        );
-
-    // checkouts
-    await FirebaseFirestore.instance.collection('cash_outs').get().then(
-          (QuerySnapshot data) => {
-            setState(() {
-              cashOuts = data.docs.length;
-            }),
-          },
-        );
-
-    // vendors
-    await FirebaseFirestore.instance.collection('vendors').get().then(
-          (QuerySnapshot data) => {
-            setState(() {
-              vendors = data.docs.length;
-            }),
-          },
-        );
+    for (var entry in collectionNames.entries) {
+      final dataSnapshot =
+          await FirebaseFirestore.instance.collection(entry.key).get();
+      setState(() {
+        entry.value(dataSnapshot.docs.length);
+      });
+    }
   }
 
   @override
@@ -129,50 +82,43 @@ class _HomeScreenState extends State<HomeScreen> {
 
   @override
   Widget build(BuildContext context) {
-    // data
-    List<AppData> data = [
+    final data = [
       AppData(
-        title: 'Orders',
-        number: orders,
-        color: dashBlue,
-        icon: Icons.shopping_cart_checkout,
-        index: 2,
-      ),
+          title: 'Orders',
+          number: orders,
+          color: dashBlue,
+          icon: Icons.shopping_cart_checkout,
+          index: 2),
       AppData(
-        title: 'Cash Outs',
-        number: cashOuts,
-        color: dashGrey,
-        icon: Icons.monetization_on,
-        index: 6,
-      ),
+          title: 'Cash Outs',
+          number: cashOuts,
+          color: dashGrey,
+          icon: Icons.monetization_on,
+          index: 6),
       AppData(
-        title: 'Products',
-        number: products,
-        color: dashOrange,
-        icon: Icons.shopping_bag,
-        index: 1,
-      ),
+          title: 'Products',
+          number: products,
+          color: dashOrange,
+          icon: Icons.shopping_bag,
+          index: 1),
       AppData(
-        title: 'Vendors',
-        number: vendors,
-        color: dashPurple,
-        icon: Icons.group,
-        index: 3,
-      ),
+          title: 'Vendors',
+          number: vendors,
+          color: dashPurple,
+          icon: Icons.group,
+          index: 3),
       AppData(
-        title: 'Categories',
-        number: categories,
-        color: dashRed,
-        icon: Icons.category_outlined,
-        index: 5,
-      ),
+          title: 'Categories',
+          number: categories,
+          color: dashRed,
+          icon: Icons.category_outlined,
+          index: 5),
       AppData(
-        title: 'Users',
-        number: users,
-        color: dashTeal,
-        icon: Icons.group,
-        index: 7,
-      ),
+          title: 'Users',
+          number: users,
+          color: dashTeal,
+          icon: Icons.group,
+          index: 7),
     ];
 
     return Scaffold(
@@ -191,59 +137,52 @@ class _HomeScreenState extends State<HomeScreen> {
             children: [
               Padding(
                 padding: const EdgeInsets.all(8.0),
-                child: LayoutBuilder(builder:
-                    (BuildContext context, BoxConstraints constraints) {
-                  final screenWidth = constraints.maxWidth;
-                  const desiredItemWidth = 180.0;
-                  final crossAxisCount =
-                      (screenWidth / desiredItemWidth).floor();
+                child: LayoutBuilder(
+                  builder: (BuildContext context, BoxConstraints constraints) {
+                    final screenWidth = constraints.maxWidth;
+                    const desiredItemWidth = 180.0;
+                    final crossAxisCount =
+                        (screenWidth / desiredItemWidth).floor();
 
-                  return GridView.builder(
-                    itemCount: data.length,
-                    padding: EdgeInsets.zero,
-                    shrinkWrap: true,
-                    gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                        crossAxisCount: crossAxisCount),
-                    itemBuilder: (context, index) => BuildDashboardContainer(
-                      title: data[index].title,
-                      value: data[index].number,
-                      color: data[index].color,
-                      icon: data[index].icon,
-                      index: data[index].index,
-                    ),
-                  );
-                }),
+                    return GridView.builder(
+                      itemCount: data.length,
+                      padding: EdgeInsets.zero,
+                      shrinkWrap: true,
+                      gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                        crossAxisCount: crossAxisCount,
+                      ),
+                      itemBuilder: (context, index) => BuildDashboardContainer(
+                        title: data[index].title,
+                        value: data[index].number,
+                        color: data[index].color,
+                        icon: data[index].icon,
+                        index: data[index].index,
+                      ),
+                    );
+                  },
+                ),
               ),
               Padding(
                 padding: const EdgeInsets.all(18.0),
                 child: LayoutBuilder(
                   builder: (BuildContext context, BoxConstraints constraints) {
-                    if (constraints.maxWidth > 600) {
-                      return Row(
-                        children: [
-                          Expanded(flex: 3, child: AppDataGraph(data: data)),
-                          const SizedBox(width: 30),
-                          Expanded(
-                            child: chartSampleData.isNotEmpty
-                                ? CategoryDataPie(
-                                    chartSampleData: chartSampleData,
-                                  )
-                                : const SizedBox.shrink(),
-                          ),
-                        ],
-                      );
-                    } else {
-                      return Column(
-                        children: [
-                          AppDataGraph(data: data),
-                          const SizedBox(width: 30),
-                          CategoryDataPie(chartSampleData: chartSampleData),
-                        ],
-                      );
-                    }
+                    final bool isWideScreen = constraints.maxWidth > 600;
+                    final children = [
+                      Expanded(flex: 3, child: AppDataGraph(data: data)),
+                      const SizedBox(width: 30),
+                      Expanded(
+                        child: chartSampleData.isNotEmpty
+                            ? CategoryDataPie(chartSampleData: chartSampleData)
+                            : const SizedBox.shrink(),
+                      ),
+                    ];
+
+                    return isWideScreen
+                        ? Row(children: children)
+                        : Column(children: children);
                   },
                 ),
-              )
+              ),
             ],
           ),
         ),

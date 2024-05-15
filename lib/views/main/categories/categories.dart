@@ -31,36 +31,30 @@ class _CategoriesScreenState extends State<CategoriesScreen> {
   bool isProcessing = false;
   final FirebaseStorage _firebaseStorage = FirebaseStorage.instance;
   final FirebaseFirestore _firebase = FirebaseFirestore.instance;
-  TextEditingController categoryName = TextEditingController();
+  final TextEditingController categoryName = TextEditingController();
 
-  // pick image
-  Future selectImage() async {
-    FilePickerResult? pickedImage = await FilePicker.platform
-        .pickFiles(allowMultiple: false, type: FileType.image);
+  Future<void> selectImage() async {
+    FilePickerResult? pickedImage = await FilePicker.platform.pickFiles(
+      allowMultiple: false,
+      type: FileType.image,
+    );
 
-    if (pickedImage == null) {
-      return;
-    } else {
+    if (pickedImage != null) {
       setState(() {
         isImgSelected = true;
+        fileBytes = pickedImage.files.first.bytes;
+        fileName = pickedImage.files.first.name;
       });
     }
-
-    setState(() {
-      fileBytes = pickedImage.files.first.bytes;
-      fileName = pickedImage.files.first.name;
-    });
   }
 
-  // reset picked image
   void resetIsImagePicked() {
     setState(() {
       isImgSelected = false;
     });
   }
 
-  // action after uploading category
-  uploadDone() {
+  void uploadDone() {
     Navigator.of(context).pop();
     setState(() {
       isProcessing = false;
@@ -69,9 +63,7 @@ class _CategoriesScreenState extends State<CategoriesScreen> {
     });
   }
 
-  // upload Category
   Future<void> uploadCategory() async {
-    //if category name is empty
     if (categoryName.text.isEmpty || categoryName.text.length < 4) {
       displaySnackBar(
         status: Status.error,
@@ -86,25 +78,22 @@ class _CategoriesScreenState extends State<CategoriesScreen> {
     setState(() {
       isProcessing = true;
     });
-    String? downloadLink;
+
     try {
       final Reference ref = _firebaseStorage.ref('categories/$fileName');
       await ref.putData(fileBytes!).whenComplete(() async {
-        downloadLink = await ref.getDownloadURL();
-      });
-      await _firebase.collection('categories').doc(fileName).set(
-        {
+        String downloadLink = await ref.getDownloadURL();
+        await _firebase.collection('categories').doc(fileName).set({
           'img_url': downloadLink,
           'category': categoryName.text.trim(),
-        },
-      ).whenComplete(() {
+        });
+
         kCoolAlert(
           message: 'Category uploaded successfully',
           context: context,
           alert: CoolAlertType.success,
           action: uploadDone,
         );
-        categoryName.clear();
       });
     } catch (e) {
       kCoolAlert(
@@ -116,30 +105,23 @@ class _CategoriesScreenState extends State<CategoriesScreen> {
     }
   }
 
-  // action after deleting
   void doneDeleting() {
     Navigator.of(context).pop();
   }
 
-  // delete category
   Future<void> deleteCategory(String id) async {
     Navigator.of(context).pop();
     EasyLoading.show(status: 'loading...');
 
     try {
-      await _firebase
-          .collection('categories')
-          .doc(id)
-          .delete()
-          .whenComplete(() {
-        EasyLoading.dismiss();
-        kCoolAlert(
-          message: 'Category deleted successfully',
-          context: context,
-          alert: CoolAlertType.success,
-          action: doneDeleting,
-        );
-      });
+      await _firebase.collection('categories').doc(id).delete();
+      EasyLoading.dismiss();
+      kCoolAlert(
+        message: 'Category deleted successfully',
+        context: context,
+        alert: CoolAlertType.success,
+        action: doneDeleting,
+      );
     } catch (e) {
       kCoolAlert(
         message: 'Category not deleted successfully',
@@ -150,7 +132,6 @@ class _CategoriesScreenState extends State<CategoriesScreen> {
     }
   }
 
-  // delete dialog
   void deleteDialog({required String id}) {
     areYouSureDialog(
       title: 'Delete Category',
@@ -166,107 +147,126 @@ class _CategoriesScreenState extends State<CategoriesScreen> {
   Widget build(BuildContext context) {
     Size size = MediaQuery.of(context).size;
     return SingleChildScrollView(
-      child: Padding(
-        padding: const EdgeInsets.all(8.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              children: [
-                Stack(
-                  children: [
-                    ClipRRect(
-                      borderRadius: BorderRadius.circular(10),
-                      child: isImgSelected
-                          ? Image.memory(
-                              fileBytes!,
-                              width: 150,
-                              height: 150,
-                              fit: BoxFit.cover,
-                            )
-                          : Image.asset(
-                              AssetManager.placeholderImg,
-                              width: 150,
-                            ),
-                    ),
-                    Positioned(
-                      bottom: 5,
-                      right: 10,
-                      child: MouseRegion(
-                        cursor: SystemMouseCursors.click,
-                        child: InkWell(
-                          onTap: () => selectImage(),
-                          child: CircleAvatar(
-                            backgroundColor: gridBg,
-                            child: !isProcessing
-                                ? const Icon(
-                                    Icons.photo,
-                                    color: accentColor,
-                                  )
-                                : const LoadingWidget(size: 30),
-                          ),
-                        ),
-                      ),
-                    )
-                  ],
-                ),
-                const SizedBox(width: 10),
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    SizedBox(
-                      width: MediaQuery.of(context).size.width / 5,
-                      child: TextFormField(
-                        autofocus: true,
-                        controller: categoryName,
-                        decoration: const InputDecoration(
-                          hintText: 'Enter category name',
-                          prefixIcon: Icon(
-                            Icons.category_outlined,
-                            color: accentColor,
-                          ),
-                        ),
-                      ),
-                    ),
-                    const SizedBox(height: 10),
-                    isImgSelected
-                        ? ElevatedButton.icon(
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: accentColor,
-                            ),
-                            onPressed: () =>
-                                !isProcessing ? uploadCategory() : null,
-                            icon: const Icon(Icons.save),
-                            label: Text(
-                              !isProcessing
-                                  ? 'Upload category'
-                                  : 'Uploading...',
-                            ),
+      padding: const EdgeInsets.all(16.0),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            'Manage Categories',
+            style: getBoldStyle(
+              color: primaryColor,
+              fontSize: FontSize.s20,
+            ),
+          ),
+          const SizedBox(height: 20),
+          Row(
+            children: [
+              Stack(
+                children: [
+                  ClipRRect(
+                    borderRadius: BorderRadius.circular(10),
+                    child: isImgSelected
+                        ? Image.memory(
+                            fileBytes!,
+                            width: 150,
+                            height: 150,
+                            fit: BoxFit.cover,
                           )
-                        : const SizedBox.shrink(),
-                  ],
-                )
-              ],
-            ),
-            const SizedBox(height: 10),
-            const Divider(color: boxBg, thickness: 1.5),
-            const SizedBox(height: 5),
-            Text(
-              'Product Categories',
-              style: getMediumStyle(
-                color: Colors.black,
-                fontSize: FontSize.s16,
+                        : Image.asset(
+                            AssetManager.placeholderImg,
+                            width: 150,
+                            height: 150,
+                          ),
+                  ),
+                  Positioned(
+                    bottom: 5,
+                    right: 10,
+                    child: MouseRegion(
+                      cursor: SystemMouseCursors.click,
+                      child: InkWell(
+                        onTap: selectImage,
+                        child: CircleAvatar(
+                          backgroundColor: gridBg,
+                          child: !isProcessing
+                              ? const Icon(Icons.photo, color: accentColor)
+                              : const LoadingWidget(size: 30),
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
               ),
-            ),
-            SizedBox(
-              height: context.screenSize ? size.height / 2.5 : size.height / 2,
-              child: CategoryGrid(
-                deleteDialog: deleteDialog,
-                cxt: context,
+              const SizedBox(width: 20),
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  SizedBox(
+                    width: size.width / 3,
+                    child: TextFormField(
+                      autofocus: true,
+                      controller: categoryName,
+                      decoration: InputDecoration(
+                        hintText: 'Enter category name',
+                        prefixIcon: const Icon(
+                          Icons.category_outlined,
+                          color: accentColor,
+                        ),
+                        filled: true,
+                        fillColor: Colors.grey[200],
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(10),
+                          borderSide: BorderSide.none,
+                        ),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 10),
+                  isImgSelected
+                      ? ElevatedButton.icon(
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: primaryColor,
+                            padding: const EdgeInsets.symmetric(
+                              vertical: 12,
+                              horizontal: 20,
+                            ),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(10),
+                            ),
+                          ),
+                          onPressed: !isProcessing ? uploadCategory : null,
+                          icon: const Icon(Icons.save),
+                          label: Text(
+                            !isProcessing ? 'Upload Category' : 'Uploading...',
+                            style: getMediumStyle(
+                              color: Colors.white,
+                              fontSize: FontSize.s16,
+                            ),
+                          ),
+                        )
+                      : const SizedBox.shrink(),
+                ],
               ),
-            )
-          ],
-        ),
+            ],
+          ),
+          const SizedBox(height: 20),
+          const Divider(color: boxBg, thickness: 1.5),
+          const SizedBox(height: 10),
+          Text(
+            'Product Categories',
+            style: getBoldStyle(
+              color: Colors.black,
+              fontSize: FontSize.s18,
+            ),
+          ),
+          const SizedBox(height: 10),
+          SizedBox(
+            height: context.screenSize ? size.height / 2.5 : size.height / 2,
+            child: CategoryGrid(
+              deleteDialog: deleteDialog,
+              cxt: context,
+            ),
+          ),
+        ],
       ),
     );
   }
