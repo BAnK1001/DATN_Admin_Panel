@@ -1,16 +1,15 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:cool_alert/cool_alert.dart';
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart' as intl;
 
 import '../../../constants/color.dart';
 import '../../../resources/assets_manager.dart';
 import '../../../resources/font_manager.dart';
 import '../../../resources/styles_manager.dart';
-import '../../components/scroll_component.dart';
 import '../../widgets/are_you_sure_dialog.dart';
 import '../../widgets/kcool_alert.dart';
 import '../../widgets/loading_widget.dart';
-import 'package:intl/intl.dart' as intl;
 
 class CashOutScreen extends StatefulWidget {
   const CashOutScreen({Key? key}) : super(key: key);
@@ -20,93 +19,70 @@ class CashOutScreen extends StatefulWidget {
 }
 
 class _CashOutScreenState extends State<CashOutScreen> {
-  Stream<QuerySnapshot> ordersStream =
+  final ScrollController _scrollController = ScrollController();
+  late Stream<QuerySnapshot> _cashOutStream =
       FirebaseFirestore.instance.collection('cash_outs').snapshots();
 
-  final _verticalScrollController = ScrollController();
-  final _horizontalScrollController = ScrollController();
+  Future<void> toggleApproval(
+      String id, bool status, double amount, String vendorId) async {
+    await FirebaseFirestore.instance.collection('cash_outs').doc(id).update(
+      {
+        'status': !status,
+      },
+    ).whenComplete(() async {
+      if (!status) {
+        await FirebaseFirestore.instance
+            .collection('vendors')
+            .doc(vendorId)
+            .update({
+          'balanceAvailable': FieldValue.increment(-amount),
+        });
+      } else {
+        await FirebaseFirestore.instance
+            .collection('vendors')
+            .doc(vendorId)
+            .update({
+          'balanceAvailable': FieldValue.increment(amount),
+        });
+      }
 
-  // called after alert for dismissal
-  doneWithAction() {
-    Navigator.of(context).pop();
+      String message = status
+          ? 'The cash out has been approved successfully.'
+          : 'The cash out has been rejected successfully.';
+
+      kCoolAlert(
+        message: message,
+        context: context,
+        alert: CoolAlertType.success,
+        action: () => Navigator.of(context).pop(),
+      );
+    });
   }
 
-  // return context
-  get cxt => context;
-
-  // delete order
-  Future<void> deleteCashOut(String id) async {
-    //pop out
-    doneWithAction();
-
+  Future<void> _deleteCashOut(String id) async {
     await FirebaseFirestore.instance
         .collection('cash_outs')
         .doc(id)
         .delete()
         .whenComplete(() {
       kCoolAlert(
-        message: 'You have successfully set the deleted cash out',
-        context: cxt,
+        message: 'You have successfully deleted the cash out',
+        context: context,
         alert: CoolAlertType.success,
-        action: doneWithAction,
+        action: () => Navigator.of(context).pop(),
       );
     });
   }
 
-  // delete dialog
-  void deleteDialog(String id) {
+  void _showDeleteDialog(String id) {
     areYouSureDialog(
-      title: 'Delete cash out',
-      content: 'Are you sure you want to delete cash out?',
+      title: 'Delete Cash Out',
+      content: 'Are you sure you want to delete this cash out?',
       context: context,
-      action: deleteCashOut,
+      action: _deleteCashOut,
       isIdInvolved: true,
       id: id,
     );
-  }
-
-  // toggle order approval
-  Future<void> toggleApproval(
-    String id,
-    bool status,
-    double amount,
-    String vendorId,
-  ) async {
-    await FirebaseFirestore.instance.collection('cash_outs').doc(id).update(
-      {
-        'status': !status,
-      },
-    ).whenComplete(() async {
-      if (status) {
-        // incrementing vendor's balance with amount
-        FirebaseFirestore.instance
-            .collection('vendors')
-            .doc(vendorId)
-            .get()
-            .then((DocumentSnapshot data) {
-          FirebaseFirestore.instance
-              .collection('vendors')
-              .doc(vendorId)
-              .update({
-            'balanceAvailable': data['balanceAvailable'] + amount,
-          });
-        });
-      } else {
-        // decrementing vendor's balance by balance
-        FirebaseFirestore.instance
-            .collection('vendors')
-            .doc(vendorId)
-            .get()
-            .then((DocumentSnapshot data) {
-          FirebaseFirestore.instance
-              .collection('vendors')
-              .doc(vendorId)
-              .update({
-            'balanceAvailable': data['balanceAvailable'] - amount,
-          });
-        });
-      }
-    });
   }
 
   @override
@@ -123,132 +99,109 @@ class _CashOutScreenState extends State<CashOutScreen> {
               const SizedBox(width: 10),
               Text(
                 'Cash Outs',
-                style: getMediumStyle(
-                  color: Colors.black,
-                  fontSize: FontSize.s16,
-                ),
+                style:
+                    getMediumStyle(color: Colors.black, fontSize: FontSize.s16),
               ),
             ],
           ),
           const SizedBox(height: 10),
-          StreamBuilder<QuerySnapshot>(
-            stream: ordersStream,
-            builder: (context, AsyncSnapshot<QuerySnapshot> snapshot) {
-              if (snapshot.hasError) {
-                const Center(
-                  child: Text('Error occurred!'),
-                );
-              }
+          Expanded(
+            child: StreamBuilder<QuerySnapshot>(
+              stream: _cashOutStream,
+              builder: (context, AsyncSnapshot<QuerySnapshot> snapshot) {
+                if (snapshot.hasError) {
+                  return const Center(child: Text('Error occurred!'));
+                }
 
-              if (snapshot.connectionState == ConnectionState.waiting) {
-                const Center(
-                  child: LoadingWidget(),
-                );
-              }
+                if (snapshot.connectionState == ConnectionState.waiting) {
+                  return const Center(child: LoadingWidget());
+                }
 
-              if (!snapshot.hasData || snapshot.data == null) {
-                ErrorWidget.builder =
-                    (FlutterErrorDetails details) => const Center(
-                          child: LoadingWidget(),
-                        );
-              }
+                if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
+                  return Center(
+                    child: Image.asset(AssetManager.noImagePlaceholderImg),
+                  );
+                }
 
-              if (snapshot.data!.docs.isEmpty) {
-                Center(
-                  child: Image.asset(AssetManager.noImagePlaceholderImg),
-                );
-              }
+                List<DocumentSnapshot> sortedDocs = snapshot.data!.docs;
+                sortedDocs.sort((a, b) => b['date'].compareTo(a['date']));
 
-              return ScrollComponent(
-                horizontalScrollController: _horizontalScrollController,
-                verticalScrollController: _verticalScrollController,
-                child: DataTable(
-                  showBottomBorder: true,
-                  headingRowColor:
-                      MaterialStateColor.resolveWith((states) => primaryColor),
-                  headingTextStyle: const TextStyle(color: Colors.white),
-                  dataRowHeight: 60,
-                  columns: const [
-                    DataColumn(label: Text('Vendor Name')),
-                    DataColumn(label: Text('Amount')),
-                    DataColumn(label: Text('Date')),
-                    DataColumn(label: Text('Action')),
-                    DataColumn(label: Text('Action')),
-                  ],
-                  rows: snapshot.data!.docs.map(
-                    (item) {
-                      return DataRow(
-                        cells: [
-                          //vendor
-                          DataCell(
-                            FutureBuilder<String>(
-                              future: FirebaseFirestore.instance
-                                  .collection('vendors')
-                                  .doc(item['vendorId'])
-                                  .get()
-                                  .then(
-                                    (DocumentSnapshot doc) => doc['storeName'],
-                                  ),
-                              builder: (context, snapshot) {
-                                if (snapshot.hasError) {
-                                  return const Text('Error occurred!');
-                                }
-
-                                if (snapshot.connectionState ==
-                                    ConnectionState.waiting) {
-                                  if (!snapshot.hasData ||
-                                      snapshot.data == null) {
-                                    ErrorWidget.builder =
-                                        (FlutterErrorDetails details) =>
-                                            const Center(
-                                              child: LoadingWidget(),
-                                            );
-                                  }
-                                }
-
-                                return Text(snapshot.data ?? '');
-                              },
-                            ),
-                          ),
-
-                          DataCell(Text('\$${item['amount']}')),
-                          DataCell(
+                return ListView.builder(
+                  controller: _scrollController,
+                  itemCount: sortedDocs.length,
+                  itemBuilder: (context, index) {
+                    var item = sortedDocs[index];
+                    return Card(
+                      margin: const EdgeInsets.symmetric(
+                          vertical: 10, horizontal: 16),
+                      child: ListTile(
+                        title: FutureBuilder<DocumentSnapshot>(
+                          future: FirebaseFirestore.instance
+                              .collection('vendors')
+                              .doc(item['vendorId'])
+                              .get(),
+                          builder: (context, snapshot) {
+                            if (snapshot.connectionState ==
+                                ConnectionState.waiting) {
+                              return const Text('Loading...');
+                            }
+                            if (snapshot.hasError) {
+                              return const Text('Error');
+                            }
+                            var vendorName = snapshot.data!['storeName'];
+                            return Text(
+                              vendorName,
+                              style: getMediumStyle(
+                                  color: Colors.black, fontSize: FontSize.s16),
+                            );
+                          },
+                        ),
+                        subtitle: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
                             Text(
-                              intl.DateFormat.yMMMEd().format(
-                                item['date'].toDate(),
-                              ),
+                              '\$${item['amount']}',
+                              style: getMediumStyle(
+                                  color: Colors.black, fontSize: FontSize.s14),
                             ),
-                          ),
-                          DataCell(
-                            ElevatedButton(
-                              style: ElevatedButton.styleFrom(
-                                backgroundColor:
+                            Text(
+                              intl.DateFormat.yMMMEd()
+                                  .format(item['date'].toDate()),
+                              style: getRegularStyle(
+                                  color: Colors.black54,
+                                  fontSize: FontSize.s12),
+                            ),
+                          ],
+                        ),
+                        trailing: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            IconButton(
+                              icon: Icon(
+                                Icons.check_circle,
+                                color:
                                     item['status'] ? primaryColor : accentColor,
                               ),
                               onPressed: () => toggleApproval(
-                                  item['id'],
-                                  item['status'],
-                                  item['amount'],
-                                  item['vendorId']),
-                              child: Text(
-                                item['status'] ? 'Reject' : 'Approve',
+                                item.id,
+                                item['status'],
+                                item['amount'],
+                                item['vendorId'],
                               ),
                             ),
-                          ),
-                          DataCell(
-                            ElevatedButton(
-                              onPressed: () => deleteDialog(item['id']),
-                              child: const Text('Delete'),
+                            IconButton(
+                              icon: const Icon(Icons.delete, color: Colors.red),
+                              onPressed: () => _showDeleteDialog(item.id),
                             ),
-                          ),
-                        ],
-                      );
-                    },
-                  ).toList(),
-                ),
-              );
-            },
-          )
+                          ],
+                        ),
+                      ),
+                    );
+                  },
+                );
+              },
+            ),
+          ),
         ],
       ),
     );

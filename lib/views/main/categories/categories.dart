@@ -151,12 +151,17 @@ class _CategoriesScreenState extends State<CategoriesScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
-            'Manage Categories',
-            style: getBoldStyle(
-              color: primaryColor,
-              fontSize: FontSize.s20,
-            ),
+          Wrap(
+            crossAxisAlignment: WrapCrossAlignment.center,
+            children: [
+              const Icon(Icons.category),
+              const SizedBox(width: 10),
+              Text(
+                'Categories',
+                style:
+                    getMediumStyle(color: Colors.black, fontSize: FontSize.s16),
+              ),
+            ],
           ),
           const SizedBox(height: 20),
           Row(

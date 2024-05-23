@@ -166,12 +166,18 @@ class _CarouselBannersState extends State<CarouselBanners> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(
-                'Manage Carousel Banners',
-                style: getBoldStyle(
-                  color: primaryColor,
-                  fontSize: FontSize.s20,
-                ),
+              Wrap(
+                crossAxisAlignment: WrapCrossAlignment.center,
+                children: [
+                  const Icon(Icons.view_carousel,
+                      color: Colors.black, size: 30),
+                  const SizedBox(width: 10),
+                  Text(
+                    'Carousel Banners',
+                    style: getMediumStyle(
+                        color: Colors.black, fontSize: FontSize.s16),
+                  ),
+                ],
               ),
               const SizedBox(height: 20),
               Center(
@@ -217,7 +223,7 @@ class _CarouselBannersState extends State<CarouselBanners> {
               ),
               const SizedBox(height: 20),
               const Divider(color: boxBg, thickness: 1.5),
-              const SizedBox(height: 10),
+              const SizedBox(height: 20),
               Text(
                 'Carousel Banners',
                 style: getMediumStyle(

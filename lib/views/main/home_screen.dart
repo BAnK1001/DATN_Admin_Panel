@@ -157,6 +157,7 @@ class _HomeScreenState extends State<HomeScreen> {
                         color: data[index].color,
                         icon: data[index].icon,
                         index: data[index].index,
+                        // Thêm animation và các thành phần trang trí khác tại đây
                       ),
                     );
                   },
