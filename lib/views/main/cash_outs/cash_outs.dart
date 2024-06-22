@@ -20,7 +20,7 @@ class CashOutScreen extends StatefulWidget {
 
 class _CashOutScreenState extends State<CashOutScreen> {
   final ScrollController _scrollController = ScrollController();
-  late Stream<QuerySnapshot> _cashOutStream =
+  late final Stream<QuerySnapshot> _cashOutStream =
       FirebaseFirestore.instance.collection('cash_outs').snapshots();
 
   Future<void> toggleApproval(

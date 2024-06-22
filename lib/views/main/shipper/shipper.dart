@@ -9,28 +9,28 @@ import '../../widgets/are_you_sure_dialog.dart';
 import '../../widgets/kcool_alert.dart';
 import '../../widgets/loading_widget.dart';
 
-class VendorsScreen extends StatefulWidget {
-  const VendorsScreen({Key? key}) : super(key: key);
+class ShipperScreen extends StatefulWidget {
+  const ShipperScreen({Key? key}) : super(key: key);
 
   @override
-  State<VendorsScreen> createState() => _VendorsScreenState();
+  State<ShipperScreen> createState() => _ShipperScreenState();
 }
 
-class _VendorsScreenState extends State<VendorsScreen> {
+class _ShipperScreenState extends State<ShipperScreen> {
   final ScrollController _scrollController = ScrollController();
   final TextEditingController _searchController = TextEditingController();
-  late Stream<QuerySnapshot> _vendorStream;
+  late Stream<QuerySnapshot> _shippersStream;
 
   @override
   void initState() {
     super.initState();
-    _vendorStream =
-        FirebaseFirestore.instance.collection('vendors').snapshots();
+    _shippersStream =
+        FirebaseFirestore.instance.collection('shippers').snapshots();
   }
 
   Future<void> _toggleApproval(String docId, bool currentStatus) async {
     await FirebaseFirestore.instance
-        .collection('vendors')
+        .collection('shippers')
         .doc(docId)
         .update({'isApproved': !currentStatus});
     kCoolAlert(
@@ -41,46 +41,29 @@ class _VendorsScreenState extends State<VendorsScreen> {
     );
   }
 
-  Future<void> _banVendor(String docId) async {
-    try {
-      await FirebaseFirestore.instance
-          .collection('vendors')
-          .doc(docId)
-          .update({'isBanned': true});
+  Future<void> _deleteShipper(String id) async {
+    await FirebaseFirestore.instance
+        .collection('shippers')
+        .doc(id)
+        .delete()
+        .whenComplete(() {
       kCoolAlert(
-        message: 'Vendor has been successfully banned.',
+        message: 'You have successfully deleted the shipper',
         context: context,
         alert: CoolAlertType.success,
         action: () => Navigator.of(context).pop(),
       );
-    } catch (e) {
-      kCoolAlert(
-        message: 'Error banning vendor: $e',
-        context: context,
-        alert: CoolAlertType.error,
-        action: () => Navigator.of(context).pop(),
-      );
-    }
+    });
   }
 
-  void _showDeleteDialog(String docId, String storeName) {
+  void _showDeleteDialog(String id) {
     areYouSureDialog(
-      title: 'Delete $storeName',
-      content: 'Are you sure you want to delete this store?',
+      title: 'Delete Shipper',
+      content: 'Are you sure you want to delete this shipper?',
       context: context,
-      action: _deleteStore,
-      id: docId,
+      action: _deleteShipper,
       isIdInvolved: true,
-    );
-  }
-
-  Future<void> _deleteStore(String docId) async {
-    await FirebaseFirestore.instance.collection('vendors').doc(docId).delete();
-    kCoolAlert(
-      message: 'You have successfully deleted the store',
-      context: context,
-      alert: CoolAlertType.success,
-      action: () => Navigator.of(context).pop(),
+      id: id,
     );
   }
 
@@ -94,10 +77,10 @@ class _VendorsScreenState extends State<VendorsScreen> {
           Wrap(
             crossAxisAlignment: WrapCrossAlignment.center,
             children: [
-              const Icon(Icons.group),
+              const Icon(Icons.local_shipping),
               const SizedBox(width: 10),
               Text(
-                'Vendors',
+                'Shippers',
                 style:
                     getMediumStyle(color: Colors.black, fontSize: FontSize.s16),
               ),
@@ -109,7 +92,7 @@ class _VendorsScreenState extends State<VendorsScreen> {
             child: TextField(
               controller: _searchController,
               decoration: InputDecoration(
-                hintText: 'Search vendors...',
+                hintText: 'Search shippers...',
                 contentPadding: const EdgeInsets.all(10),
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(30),
@@ -124,10 +107,10 @@ class _VendorsScreenState extends State<VendorsScreen> {
               ),
               onChanged: (value) {
                 setState(() {
-                  _vendorStream = FirebaseFirestore.instance
-                      .collection('vendors')
-                      .where('storeName', isGreaterThanOrEqualTo: value)
-                      .where('storeName', isLessThan: value + 'z')
+                  _shippersStream = FirebaseFirestore.instance
+                      .collection('shippers')
+                      .where('fullname', isGreaterThanOrEqualTo: value)
+                      .where('fullname', isLessThan: value + 'z')
                       .snapshots();
                 });
               },
@@ -136,7 +119,7 @@ class _VendorsScreenState extends State<VendorsScreen> {
           const SizedBox(height: 10),
           Expanded(
             child: StreamBuilder<QuerySnapshot>(
-              stream: _vendorStream,
+              stream: _shippersStream,
               builder: (context, AsyncSnapshot<QuerySnapshot> snapshot) {
                 if (snapshot.hasError) {
                   return const Center(child: Text('Error occurred!'));
@@ -152,15 +135,12 @@ class _VendorsScreenState extends State<VendorsScreen> {
                 }
 
                 List<DocumentSnapshot> sortedDocs = snapshot.data!.docs;
-                sortedDocs
-                    .sort((a, b) => b['storeName'].compareTo(a['storeName']));
 
                 return ListView.builder(
                   controller: _scrollController,
                   itemCount: sortedDocs.length,
                   itemBuilder: (context, index) {
                     var item = sortedDocs[index];
-                    bool isBanned = item['isBanned'] ?? false;
                     return Card(
                       margin: const EdgeInsets.symmetric(
                           vertical: 10, horizontal: 16),
@@ -168,14 +148,14 @@ class _VendorsScreenState extends State<VendorsScreen> {
                         leading: ClipRRect(
                           borderRadius: BorderRadius.circular(10),
                           child: Image.network(
-                            item['storeImgUrl'],
+                            item['image'],
                             width: 50,
                             height: 50,
                             fit: BoxFit.cover,
                           ),
                         ),
                         title: Text(
-                          item['storeName'],
+                          item['fullname'],
                           style: getMediumStyle(
                               color: Colors.black, fontSize: FontSize.s16),
                         ),
@@ -183,22 +163,28 @@ class _VendorsScreenState extends State<VendorsScreen> {
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Text(
-                              item['email'],
+                              'Phone: ${item['phone']}',
                               style: getMediumStyle(
                                   color: Colors.black, fontSize: FontSize.s14),
                             ),
                             Text(
-                              '${item['city']}, ${item['state']}, ${item['country']}',
+                              'Email: ${item['email']}',
                               style: getRegularStyle(
                                   color: Colors.black54,
                                   fontSize: FontSize.s12),
                             ),
-                            if (isBanned)
-                              Text(
-                                'This vendor is banned',
-                                style: getRegularStyle(
-                                    color: Colors.red, fontSize: FontSize.s12),
-                              ),
+                            Text(
+                              'Address: ${item['address']}',
+                              style: getRegularStyle(
+                                  color: Colors.black54,
+                                  fontSize: FontSize.s12),
+                            ),
+                            Text(
+                              item['isApproved'] ? 'Approved' : 'Not Approved',
+                              style: getRegularStyle(
+                                  color: Colors.black54,
+                                  fontSize: FontSize.s12),
+                            ),
                           ],
                         ),
                         trailing: Row(
@@ -214,16 +200,9 @@ class _VendorsScreenState extends State<VendorsScreen> {
                               onPressed: () =>
                                   _toggleApproval(item.id, item['isApproved']),
                             ),
-                            if (!isBanned) // Chỉ hiển thị nút ban nếu vendor chưa bị ban
-                              IconButton(
-                                icon:
-                                    const Icon(Icons.block, color: Colors.red),
-                                onPressed: () => _banVendor(item.id),
-                              ),
                             IconButton(
                               icon: const Icon(Icons.delete, color: Colors.red),
-                              onPressed: () =>
-                                  _showDeleteDialog(item.id, item['storeName']),
+                              onPressed: () => _showDeleteDialog(item.id),
                             ),
                           ],
                         ),

@@ -35,3 +35,5 @@ var dashOrange = Colors.orange.withOpacity(0.6);
 var dashPurple = Colors.purple.withOpacity(0.6);
 var dashRed = Colors.red.withOpacity(0.6);
 var dashTeal = Colors.teal.withOpacity(0.6);
+var dashGreen = Colors.green.withOpacity(0.6);
+var dashYellow = Colors.yellow.withOpacity(0.6);

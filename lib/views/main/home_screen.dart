@@ -23,6 +23,8 @@ class _HomeScreenState extends State<HomeScreen> {
   int categories = 0;
   int vendors = 0;
   int products = 0;
+  int shipper = 0;
+  int refunds = 0;
 
   List<ChartSampleData> chartSampleData = [];
 
@@ -62,6 +64,8 @@ class _HomeScreenState extends State<HomeScreen> {
       'categories': (int value) => categories = value,
       'cash_outs': (int value) => cashOuts = value,
       'vendors': (int value) => vendors = value,
+      'shippers': (int value) => shipper = value,
+      'refunds': (int value) => refunds = value,
     };
 
     for (var entry in collectionNames.entries) {
@@ -84,23 +88,17 @@ class _HomeScreenState extends State<HomeScreen> {
   Widget build(BuildContext context) {
     final data = [
       AppData(
-          title: 'Orders',
-          number: orders,
-          color: dashBlue,
-          icon: Icons.shopping_cart_checkout,
-          index: 2),
-      AppData(
-          title: 'Cash Outs',
-          number: cashOuts,
-          color: dashGrey,
-          icon: Icons.monetization_on,
-          index: 6),
-      AppData(
           title: 'Products',
           number: products,
           color: dashOrange,
           icon: Icons.shopping_bag,
           index: 1),
+      AppData(
+          title: 'Orders',
+          number: orders,
+          color: dashBlue,
+          icon: Icons.shopping_cart_checkout,
+          index: 2),
       AppData(
           title: 'Vendors',
           number: vendors,
@@ -114,11 +112,29 @@ class _HomeScreenState extends State<HomeScreen> {
           icon: Icons.category_outlined,
           index: 5),
       AppData(
+          title: 'Cash Outs',
+          number: cashOuts,
+          color: dashGrey,
+          icon: Icons.monetization_on,
+          index: 6),
+      AppData(
           title: 'Users',
           number: users,
           color: dashTeal,
           icon: Icons.group,
           index: 7),
+      AppData(
+          title: 'Shippers',
+          number: shipper,
+          color: dashGreen,
+          icon: Icons.local_shipping,
+          index: 4),
+      AppData(
+          title: 'Refunds',
+          number: refunds,
+          color: dashYellow,
+          icon: Icons.receipt,
+          index: 8),
     ];
 
     return Scaffold(
@@ -157,7 +173,6 @@ class _HomeScreenState extends State<HomeScreen> {
                         color: data[index].color,
                         icon: data[index].icon,
                         index: data[index].index,
-                        // Thêm animation và các thành phần trang trí khác tại đây
                       ),
                     );
                   },

@@ -211,6 +211,13 @@ class OrderItem extends StatelessWidget {
                 },
               ),
               ListTile(
+                title: const Text('Approved'),
+                onTap: () {
+                  updateOrderStatus(context, orderId, 2);
+                  Navigator.of(context).pop();
+                },
+              ),
+              ListTile(
                 title: const Text('Processing'),
                 onTap: () {
                   updateOrderStatus(context, orderId, 4);
@@ -221,13 +228,6 @@ class OrderItem extends StatelessWidget {
                 title: const Text('Delivering'),
                 onTap: () {
                   updateOrderStatus(context, orderId, 3);
-                  Navigator.of(context).pop();
-                },
-              ),
-              ListTile(
-                title: const Text('Approved'),
-                onTap: () {
-                  updateOrderStatus(context, orderId, 2);
                   Navigator.of(context).pop();
                 },
               ),

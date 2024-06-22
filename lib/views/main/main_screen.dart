@@ -1,7 +1,8 @@
 import 'dart:async';
-
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:shoes_shop_admin/views/main/refunds/refunds.dart';
+import 'package:shoes_shop_admin/views/main/shipper/shipper.dart';
 import 'package:shoes_shop_admin/views/main/users/users.dart';
 import '../../controllers/route_manager.dart';
 import 'products/products.dart';
@@ -40,6 +41,8 @@ class _MainScreenState extends State<MainScreen> {
     CategoriesScreen(),
     CashOutScreen(),
     UsersScreen(),
+    ShipperScreen(),
+    RefundScreen(),
   ];
 
   void setNewPage(int index) {
@@ -91,12 +94,13 @@ class _MainScreenState extends State<MainScreen> {
     return Scaffold(
       appBar: AppBar(
         automaticallyImplyLeading: false,
-        backgroundColor: Colors.white, // Thay đổi màu AppBar
+        backgroundColor: Colors.white,
         elevation: 0,
         title: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Image.asset(AssetManager.logoTransparent, width: 40),
+            Image.asset(AssetManager.logoTransparent,
+                width: 30), // Smaller logo
             const SizedBox(width: 8),
             RichText(
               text: TextSpan(
@@ -125,7 +129,7 @@ class _MainScreenState extends State<MainScreen> {
             onPressed: () => logoutDialog(),
             icon: const Icon(
               Icons.logout,
-              color: Colors.white,
+              color: Colors.black, // Change icon color
             ),
           ),
         ],
@@ -135,23 +139,35 @@ class _MainScreenState extends State<MainScreen> {
           }),
           icon: const Icon(
             Icons.menu,
-            color: Colors.white,
+            color: Colors.black, // Change icon color
           ),
         ),
       ),
       body: Row(
         children: [
           NavigationRail(
-            backgroundColor: Colors.white, // Thay đổi màu nền NavigationRail
+            backgroundColor: Colors.white,
             selectedLabelTextStyle: const TextStyle(
-                color: Colors.grey, fontWeight: FontWeight.bold),
-            unselectedIconTheme:
-                const IconThemeData(color: Colors.grey, size: 24),
-            unselectedLabelTextStyle: const TextStyle(color: Colors.grey),
+              color: Colors.grey,
+              fontWeight: FontWeight.bold,
+              fontSize: 12, // Smaller font size for selected label
+            ),
+            unselectedIconTheme: const IconThemeData(
+              color: Colors.grey,
+              size: 18, // Smaller size for unselected icons
+            ),
+            unselectedLabelTextStyle: const TextStyle(
+              color: Colors.grey,
+              fontSize: 10, // Smaller font size for unselected label
+            ),
+            selectedIconTheme: const IconThemeData(
+              color: Colors.grey,
+              size: 20, // Smaller size for selected icons
+            ),
             onDestinationSelected: (index) => setState(() {
               _pageIndex = index;
             }),
-            labelType: NavigationRailLabelType.all, // Hiển thị tất cả nhãn
+            labelType: NavigationRailLabelType.all,
             leading: MouseRegion(
               cursor: SystemMouseCursors.click,
               child: GestureDetector(
@@ -161,7 +177,7 @@ class _MainScreenState extends State<MainScreen> {
                         ? Hero(
                             tag: user.email!,
                             child: CircleAvatar(
-                              radius: 30,
+                              radius: 20, // Smaller Avatar
                               backgroundColor: Colors.transparent,
                               backgroundImage: NetworkImage(
                                 user.photoURL!,
@@ -170,15 +186,15 @@ class _MainScreenState extends State<MainScreen> {
                           )
                         : Hero(
                             tag: user.email!,
-                            child: CircleAvatar(
-                              radius: 30,
+                            child: const CircleAvatar(
+                              radius: 20, // Smaller Avatar
                               backgroundColor: Colors.transparent,
-                              backgroundImage: const AssetImage(
+                              backgroundImage: AssetImage(
                                 AssetManager.avatar,
                               ),
                             ),
                           ),
-                    const SizedBox(height: 10),
+                    const SizedBox(height: 8),
                     Text(
                       user.displayName ?? 'Shop Admin',
                       style: getMediumStyle(color: Colors.grey),
@@ -187,15 +203,12 @@ class _MainScreenState extends State<MainScreen> {
                 ),
               ),
             ),
+            minWidth: 56, // Smaller width
+            groupAlignment: 0.0, // Align items in the center
             extended: isExtended,
-            selectedIconTheme: const IconThemeData(
-              color: Colors.grey,
-            ),
             destinations: const [
               NavigationRailDestination(
-                icon: Icon(
-                  Icons.dashboard_outlined,
-                ),
+                icon: Icon(Icons.dashboard_outlined),
                 selectedIcon: Icon(Icons.dashboard),
                 label: Text('Dashboard'),
               ),
@@ -234,6 +247,16 @@ class _MainScreenState extends State<MainScreen> {
                 selectedIcon: Icon(Icons.group),
                 label: Text('Users'),
               ),
+              NavigationRailDestination(
+                icon: Icon(Icons.local_shipping_outlined),
+                selectedIcon: Icon(Icons.local_shipping),
+                label: Text('Shippers'),
+              ),
+              NavigationRailDestination(
+                icon: Icon(Icons.receipt_outlined),
+                selectedIcon: Icon(Icons.receipt),
+                label: Text('Refunds'),
+              ),
             ],
             selectedIndex: _pageIndex,
           ),
@@ -244,7 +267,7 @@ class _MainScreenState extends State<MainScreen> {
               ),
               child: _pages[_pageIndex],
             ),
-          )
+          ),
         ],
       ),
     );
