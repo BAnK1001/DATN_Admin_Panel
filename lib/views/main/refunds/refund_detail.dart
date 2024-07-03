@@ -266,7 +266,7 @@ class _RefundDetailsScreenState extends State<RefundDetailsScreen> {
 
           if (refundData['mediaType'] == 'video') {
             _videoController =
-                VideoPlayerController.networkUrl(refundData['mediaUrl'])
+                VideoPlayerController.network(refundData['mediaUrl'])
                   ..initialize().then((_) {
                     setState(() {});
                   });
@@ -287,56 +287,34 @@ class _RefundDetailsScreenState extends State<RefundDetailsScreen> {
                   buildDetailCard(
                     icon: Icons.report_problem,
                     title: 'Reason',
-                    content: refundData['reason'],
+                    content: refundData['reason'] ?? 'No reason provided',
                   ),
                   buildDetailCard(
                     icon: Icons.comment,
                     title: 'Comment',
-                    content: refundData['comment'],
+                    content: refundData['comment'] ?? 'No comment provided',
                   ),
                   buildDetailCard(
                     icon: Icons.attach_money,
                     title: 'Amount',
-                    content: '\$${refundData['amount']}',
+                    content: refundData['amount'].toString(),
                   ),
                   buildDetailCard(
                     icon: Icons.person,
-                    title: 'Customer Name',
-                    content: customerName,
+                    title: 'Customer',
+                    content: customerName.isEmpty ? 'Loading...' : customerName,
                   ),
                   buildDetailCard(
                     icon: Icons.store,
-                    title: 'Vendor Name',
-                    content: vendorName,
+                    title: 'Vendor',
+                    content: vendorName.isEmpty ? 'Loading...' : vendorName,
                   ),
-                  buildDetailCard(
-                    icon: Icons.receipt,
-                    title: 'Order ID',
-                    content: refundData['orderId'],
+                  buildMediaCard(
+                    mediaType: refundData['mediaType'],
+                    mediaUrl: refundData['mediaUrl'],
+                    videoController: _videoController,
                   ),
-                  buildDetailCard(
-                    icon: Icons.assignment_turned_in,
-                    title: 'Status',
-                    content: getStatusText(refundData['status']),
-                  ),
-                  buildDetailCard(
-                    icon: Icons.date_range,
-                    title: 'Request Date',
-                    content: refundData['requestDate'].toDate().toString(),
-                  ),
-                  if (refundData.containsKey('isVendorCheck'))
-                    buildVendorCheckNotification(refundData['isVendorCheck']),
-                  if (refundData['mediaType'] == 'image')
-                    buildMediaCard(
-                      mediaType: 'image',
-                      mediaUrl: refundData['mediaUrl'],
-                    ),
-                  if (refundData['mediaType'] == 'video' &&
-                      _videoController != null)
-                    buildMediaCard(
-                      mediaType: 'video',
-                      videoController: _videoController,
-                    ),
+                  buildVendorCheckNotification(refundData['isVendorCheck']),
                 ],
               ),
             ),
@@ -352,103 +330,78 @@ class _RefundDetailsScreenState extends State<RefundDetailsScreen> {
     required String content,
   }) {
     return Card(
-      elevation: 5,
-      margin: const EdgeInsets.symmetric(vertical: 8.0),
-      child: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Row(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Icon(icon, color: Colors.blue),
-            const SizedBox(width: 16),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    title,
-                    style: getMediumStyle(
-                        color: Colors.black, fontSize: FontSize.s16),
-                  ),
-                  const SizedBox(height: 8),
-                  Text(
-                    content,
-                    style: getRegularStyle(
-                        color: Colors.black54, fontSize: FontSize.s14),
-                  ),
-                ],
-              ),
-            ),
-          ],
-        ),
+      child: ListTile(
+        leading: Icon(icon, color: Colors.blue),
+        title: Text(title, style: getMediumStyle(color: Colors.black)),
+        subtitle: Text(content, style: getRegularStyle(color: Colors.black)),
       ),
     );
   }
 
   Widget buildMediaCard({
     required String mediaType,
-    String? mediaUrl,
+    required String mediaUrl,
     VideoPlayerController? videoController,
   }) {
-    return Card(
-      elevation: 5,
-      margin: const EdgeInsets.symmetric(vertical: 16.0),
-      child: Padding(
-        padding: const EdgeInsets.all(8.0),
-        child: mediaType == 'image'
-            ? Image.network(mediaUrl!)
-            : Column(
-                children: [
-                  AspectRatio(
-                    aspectRatio: videoController!.value.aspectRatio,
-                    child: VideoPlayer(videoController),
-                  ),
-                  VideoProgressIndicator(videoController, allowScrubbing: true),
-                  IconButton(
-                    icon: Icon(_isPlaying ? Icons.pause : Icons.play_arrow),
-                    onPressed: () {
-                      setState(() {
-                        _isPlaying
-                            ? videoController.pause()
-                            : videoController.play();
-                        _isPlaying = !_isPlaying;
-                      });
-                    },
-                  ),
-                ],
-              ),
-      ),
-    );
-  }
-
-  Widget buildVendorCheckNotification(bool isVendorChecked) {
-    return Card(
-      elevation: 5,
-      margin: const EdgeInsets.symmetric(vertical: 16.0),
-      child: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Row(
+    if (mediaType == 'image') {
+      return Card(
+        child: Column(
           children: [
-            Icon(
-              isVendorChecked ? Icons.check_circle : Icons.error,
-              color: isVendorChecked ? Colors.green : Colors.red,
-              size: 40,
+            Image.network(mediaUrl),
+          ],
+        ),
+      );
+    } else if (mediaType == 'video' && videoController != null) {
+      return Card(
+        child: Column(
+          children: [
+            AspectRatio(
+              aspectRatio: videoController.value.aspectRatio,
+              child: VideoPlayer(videoController),
             ),
-            const SizedBox(width: 16),
-            Expanded(
-              child: Text(
-                isVendorChecked
-                    ? 'This request has been checked by the Vendor.'
-                    : 'This request has not been reviewed by the Vendor.',
-                style: TextStyle(
-                  fontSize: FontSize.s16,
-                  color: isVendorChecked ? Colors.green : Colors.red,
+            Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                IconButton(
+                  icon: Icon(_isPlaying ? Icons.pause : Icons.play_arrow),
+                  onPressed: () {
+                    setState(() {
+                      if (_isPlaying) {
+                        videoController.pause();
+                      } else {
+                        videoController.play();
+                      }
+                      _isPlaying = !_isPlaying;
+                    });
+                  },
                 ),
-              ),
+              ],
             ),
           ],
         ),
-      ),
-    );
+      );
+    } else {
+      return const SizedBox.shrink();
+    }
+  }
+
+  Widget buildVendorCheckNotification(bool isVendorCheck) {
+    if (isVendorCheck) {
+      return Card(
+        color: Colors.green[100],
+        child: const ListTile(
+          leading: Icon(Icons.check_circle, color: Colors.green),
+          title: Text('Vendor has confirmed the status.'),
+        ),
+      );
+    } else {
+      return Card(
+        color: Colors.red[100],
+        child: const ListTile(
+          leading: Icon(Icons.error, color: Colors.red),
+          title: Text('Vendor has not confirmed the status.'),
+        ),
+      );
+    }
   }
 }

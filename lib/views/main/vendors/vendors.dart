@@ -214,7 +214,7 @@ class _VendorsScreenState extends State<VendorsScreen> {
                               onPressed: () =>
                                   _toggleApproval(item.id, item['isApproved']),
                             ),
-                            if (!isBanned) // Chỉ hiển thị nút ban nếu vendor chưa bị ban
+                            if (!isBanned)
                               IconButton(
                                 icon:
                                     const Icon(Icons.block, color: Colors.red),

@@ -1,5 +1,6 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:cool_alert/cool_alert.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_slidable/flutter_slidable.dart';
 import 'package:shoes_shop_admin/resources/assets_manager.dart';
@@ -68,24 +69,28 @@ class _RefundScreenState extends State<RefundScreen> {
         .doc(id)
         .delete()
         .whenComplete(() {
-      kCoolAlert(
-        message: 'You have successfully deleted the refund',
-        context: context,
-        alert: CoolAlertType.success,
-        action: () => Navigator.of(context).pop(),
-      );
+      if (mounted) {
+        kCoolAlert(
+          message: 'You have successfully deleted the refund',
+          context: context,
+          alert: CoolAlertType.success,
+          action: () => Navigator.of(context).pop(),
+        );
+      }
     });
   }
 
   void _showDeleteDialog(String id) {
-    areYouSureDialog(
-      title: 'Delete Refund',
-      content: 'Are you sure you want to delete this refund?',
-      context: context,
-      action: _deleteRefund,
-      isIdInvolved: true,
-      id: id,
-    );
+    if (mounted) {
+      areYouSureDialog(
+        title: 'Delete Refund',
+        content: 'Are you sure you want to delete this refund?',
+        context: context,
+        action: _deleteRefund,
+        isIdInvolved: true,
+        id: id,
+      );
+    }
   }
 
   void _navigateToRefundDetails(String refundId) {

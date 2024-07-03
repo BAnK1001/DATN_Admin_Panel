@@ -27,8 +27,8 @@ class MainScreen extends StatefulWidget {
 
 class _MainScreenState extends State<MainScreen> {
   var _pageIndex = 0;
-  bool isExtended = false;
   bool isLoading = true;
+  bool isDarkMode = false; // Thêm biến trạng thái Dark Mode
 
   final user = FirebaseAuth.instance.currentUser!;
 
@@ -60,13 +60,6 @@ class _MainScreenState extends State<MainScreen> {
     super.initState();
   }
 
-  // for navigation rail
-  toggleIsExtended() {
-    setState(() {
-      isExtended = !isExtended;
-    });
-  }
-
   // logout
   logout() async {
     await FirebaseAuth.instance.signOut();
@@ -89,186 +82,194 @@ class _MainScreenState extends State<MainScreen> {
     );
   }
 
+  // Toggle Dark Mode
+  toggleDarkMode() {
+    setState(() {
+      isDarkMode = !isDarkMode;
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        automaticallyImplyLeading: false,
-        backgroundColor: Colors.white,
-        elevation: 0,
-        title: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Image.asset(AssetManager.logoTransparent,
-                width: 30), // Smaller logo
-            const SizedBox(width: 8),
-            RichText(
-              text: TextSpan(
-                text: 'SHOES',
-                children: [
-                  TextSpan(
-                    text: 'SHOP',
-                    style: getMediumStyle(
-                      color: Colors.blue,
-                    ),
-                    children: const [
-                      TextSpan(text: ' ADMIN'),
-                    ],
-                  )
-                ],
-                style: getMediumStyle(
-                  color: Colors.red,
+    final theme = isDarkMode ? ThemeData.dark() : ThemeData.light();
+
+    return MaterialApp(
+      theme: theme,
+      home: Scaffold(
+        appBar: AppBar(
+          automaticallyImplyLeading: false,
+          backgroundColor: Colors.white,
+          elevation: 0,
+          title: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Image.asset(AssetManager.logoTransparent, width: 30),
+              const SizedBox(width: 8),
+              RichText(
+                text: TextSpan(
+                  text: 'SHOES',
+                  children: [
+                    TextSpan(
+                      text: 'SHOP',
+                      style: getMediumStyle(
+                        color: Colors.blue,
+                      ),
+                      children: const [
+                        TextSpan(text: ' ADMIN'),
+                      ],
+                    )
+                  ],
+                  style: getMediumStyle(
+                    color: Colors.red,
+                  ),
                 ),
+              ),
+            ],
+          ),
+          centerTitle: true,
+          actions: [
+            IconButton(
+              onPressed: () => toggleDarkMode(),
+              icon: Icon(
+                isDarkMode ? Icons.dark_mode : Icons.light_mode,
+                color: Colors.black,
+              ),
+            ),
+            IconButton(
+              onPressed: () => logoutDialog(),
+              icon: const Icon(
+                Icons.logout,
+                color: Colors.black,
               ),
             ),
           ],
         ),
-        centerTitle: true,
-        actions: [
-          IconButton(
-            onPressed: () => logoutDialog(),
-            icon: const Icon(
-              Icons.logout,
-              color: Colors.black, // Change icon color
-            ),
-          ),
-        ],
-        leading: IconButton(
-          onPressed: () => setState(() {
-            isExtended = !isExtended;
-          }),
-          icon: const Icon(
-            Icons.menu,
-            color: Colors.black, // Change icon color
-          ),
-        ),
-      ),
-      body: Row(
-        children: [
-          NavigationRail(
-            backgroundColor: Colors.white,
-            selectedLabelTextStyle: const TextStyle(
-              color: Colors.grey,
-              fontWeight: FontWeight.bold,
-              fontSize: 12, // Smaller font size for selected label
-            ),
-            unselectedIconTheme: const IconThemeData(
-              color: Colors.grey,
-              size: 18, // Smaller size for unselected icons
-            ),
-            unselectedLabelTextStyle: const TextStyle(
-              color: Colors.grey,
-              fontSize: 10, // Smaller font size for unselected label
-            ),
-            selectedIconTheme: const IconThemeData(
-              color: Colors.grey,
-              size: 20, // Smaller size for selected icons
-            ),
-            onDestinationSelected: (index) => setState(() {
-              _pageIndex = index;
-            }),
-            labelType: NavigationRailLabelType.all,
-            leading: MouseRegion(
-              cursor: SystemMouseCursors.click,
-              child: GestureDetector(
-                child: Column(
-                  children: [
-                    user.photoURL != null
-                        ? Hero(
-                            tag: user.email!,
-                            child: CircleAvatar(
-                              radius: 20, // Smaller Avatar
-                              backgroundColor: Colors.transparent,
-                              backgroundImage: NetworkImage(
-                                user.photoURL!,
+        body: Row(
+          children: [
+            NavigationRail(
+              backgroundColor: Colors.white,
+              selectedLabelTextStyle: const TextStyle(
+                color: Colors.grey,
+                fontWeight: FontWeight.bold,
+                fontSize: 12, // Smaller font size for selected label
+              ),
+              unselectedIconTheme: const IconThemeData(
+                color: Colors.grey,
+                size: 18, // Smaller size for unselected icons
+              ),
+              unselectedLabelTextStyle: const TextStyle(
+                color: Colors.grey,
+                fontSize: 10, // Smaller font size for unselected label
+              ),
+              selectedIconTheme: const IconThemeData(
+                color: Colors.grey,
+                size: 20, // Smaller size for selected icons
+              ),
+              onDestinationSelected: (index) => setState(() {
+                _pageIndex = index;
+              }),
+              labelType: NavigationRailLabelType.all,
+              leading: MouseRegion(
+                cursor: SystemMouseCursors.click,
+                child: GestureDetector(
+                  child: Column(
+                    children: [
+                      user.photoURL != null
+                          ? Hero(
+                              tag: user.email!,
+                              child: CircleAvatar(
+                                radius: 20, // Smaller Avatar
+                                backgroundColor: Colors.transparent,
+                                backgroundImage: NetworkImage(
+                                  user.photoURL!,
+                                ),
+                              ),
+                            )
+                          : Hero(
+                              tag: user.email!,
+                              child: const CircleAvatar(
+                                radius: 20, // Smaller Avatar
+                                backgroundColor: Colors.transparent,
+                                backgroundImage: AssetImage(
+                                  AssetManager.avatar,
+                                ),
                               ),
                             ),
-                          )
-                        : Hero(
-                            tag: user.email!,
-                            child: const CircleAvatar(
-                              radius: 20, // Smaller Avatar
-                              backgroundColor: Colors.transparent,
-                              backgroundImage: AssetImage(
-                                AssetManager.avatar,
-                              ),
-                            ),
-                          ),
-                    const SizedBox(height: 8),
-                    Text(
-                      user.displayName ?? 'Shop Admin',
-                      style: getMediumStyle(color: Colors.grey),
-                    )
-                  ],
+                      const SizedBox(height: 8),
+                      Text(
+                        user.displayName ?? 'Shop Admin',
+                        style: getMediumStyle(color: Colors.grey),
+                      )
+                    ],
+                  ),
                 ),
               ),
+              minWidth: 56, // Smaller width
+              groupAlignment: 0.0, // Align items in the center
+              destinations: const [
+                NavigationRailDestination(
+                  icon: Icon(Icons.dashboard_outlined),
+                  selectedIcon: Icon(Icons.dashboard),
+                  label: Text('Dashboard'),
+                ),
+                NavigationRailDestination(
+                  icon: Icon(Icons.shopping_bag_outlined),
+                  selectedIcon: Icon(Icons.shopping_bag),
+                  label: Text('Products'),
+                ),
+                NavigationRailDestination(
+                  icon: Icon(Icons.shopping_cart_checkout),
+                  selectedIcon: Icon(Icons.shopping_cart),
+                  label: Text('Orders'),
+                ),
+                NavigationRailDestination(
+                  icon: Icon(Icons.group_outlined),
+                  selectedIcon: Icon(Icons.group),
+                  label: Text('Vendors'),
+                ),
+                NavigationRailDestination(
+                  icon: Icon(Icons.view_carousel),
+                  selectedIcon: Icon(Icons.view_carousel),
+                  label: Text('Carousels'),
+                ),
+                NavigationRailDestination(
+                  icon: Icon(Icons.category_outlined),
+                  selectedIcon: Icon(Icons.category),
+                  label: Text('Categories'),
+                ),
+                NavigationRailDestination(
+                  icon: Icon(Icons.monetization_on_outlined),
+                  selectedIcon: Icon(Icons.monetization_on),
+                  label: Text('Cash outs'),
+                ),
+                NavigationRailDestination(
+                  icon: Icon(Icons.group),
+                  selectedIcon: Icon(Icons.group),
+                  label: Text('Users'),
+                ),
+                NavigationRailDestination(
+                  icon: Icon(Icons.local_shipping_outlined),
+                  selectedIcon: Icon(Icons.local_shipping),
+                  label: Text('Shippers'),
+                ),
+                NavigationRailDestination(
+                  icon: Icon(Icons.receipt_outlined),
+                  selectedIcon: Icon(Icons.receipt),
+                  label: Text('Refunds'),
+                ),
+              ],
+              selectedIndex: _pageIndex,
             ),
-            minWidth: 56, // Smaller width
-            groupAlignment: 0.0, // Align items in the center
-            extended: isExtended,
-            destinations: const [
-              NavigationRailDestination(
-                icon: Icon(Icons.dashboard_outlined),
-                selectedIcon: Icon(Icons.dashboard),
-                label: Text('Dashboard'),
+            Expanded(
+              child: Padding(
+                padding: EdgeInsets.only(
+                  top: MediaQuery.of(context).padding.top,
+                ),
+                child: _pages[_pageIndex],
               ),
-              NavigationRailDestination(
-                icon: Icon(Icons.shopping_bag_outlined),
-                selectedIcon: Icon(Icons.shopping_bag),
-                label: Text('Products'),
-              ),
-              NavigationRailDestination(
-                icon: Icon(Icons.shopping_cart_checkout),
-                selectedIcon: Icon(Icons.shopping_cart),
-                label: Text('Orders'),
-              ),
-              NavigationRailDestination(
-                icon: Icon(Icons.group_outlined),
-                selectedIcon: Icon(Icons.group),
-                label: Text('Vendors'),
-              ),
-              NavigationRailDestination(
-                icon: Icon(Icons.view_carousel),
-                selectedIcon: Icon(Icons.view_carousel),
-                label: Text('Carousels'),
-              ),
-              NavigationRailDestination(
-                icon: Icon(Icons.category_outlined),
-                selectedIcon: Icon(Icons.category),
-                label: Text('Categories'),
-              ),
-              NavigationRailDestination(
-                icon: Icon(Icons.monetization_on_outlined),
-                selectedIcon: Icon(Icons.monetization_on),
-                label: Text('Cash outs'),
-              ),
-              NavigationRailDestination(
-                icon: Icon(Icons.group),
-                selectedIcon: Icon(Icons.group),
-                label: Text('Users'),
-              ),
-              NavigationRailDestination(
-                icon: Icon(Icons.local_shipping_outlined),
-                selectedIcon: Icon(Icons.local_shipping),
-                label: Text('Shippers'),
-              ),
-              NavigationRailDestination(
-                icon: Icon(Icons.receipt_outlined),
-                selectedIcon: Icon(Icons.receipt),
-                label: Text('Refunds'),
-              ),
-            ],
-            selectedIndex: _pageIndex,
-          ),
-          Expanded(
-            child: Padding(
-              padding: EdgeInsets.only(
-                top: MediaQuery.of(context).padding.top,
-              ),
-              child: _pages[_pageIndex],
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
