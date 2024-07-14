@@ -20,26 +20,21 @@ class _UsersScreenState extends State<UsersScreen> {
   final TextEditingController _searchController = TextEditingController();
   late Stream<QuerySnapshot> _usersStream;
 
-  @override
-  void initState() {
-    super.initState();
-    _usersStream =
-        FirebaseFirestore.instance.collection('customers').snapshots();
-  }
-
   Future<void> _deleteCustomer(String id) async {
-    await FirebaseFirestore.instance
-        .collection('customers')
-        .doc(id)
-        .delete()
-        .whenComplete(() {
-      kCoolAlert(
-        message: 'You have successfully deleted the user',
-        context: context,
-        alert: CoolAlertType.success,
-        action: () => Navigator.of(context).pop(),
-      );
-    });
+    try {
+      await FirebaseFirestore.instance.collection('customers').doc(id).delete();
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Customer deleted successfully')),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Error deleting customer: $e')),
+        );
+      }
+    }
   }
 
   void _showDeleteDialog(String id) {
@@ -47,10 +42,21 @@ class _UsersScreenState extends State<UsersScreen> {
       title: 'Delete Customer',
       content: 'Are you sure you want to delete this customer?',
       context: context,
-      action: _deleteCustomer,
-      isIdInvolved: true,
-      id: id,
+      action: () async {
+        await _deleteCustomer(id);
+        if (mounted) {
+          Navigator.of(context).pop();
+        }
+      },
+      isIdInvolved: false,
     );
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    _usersStream =
+        FirebaseFirestore.instance.collection('customers').snapshots();
   }
 
   @override

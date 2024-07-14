@@ -28,6 +28,10 @@ class _VendorsScreenState extends State<VendorsScreen> {
         FirebaseFirestore.instance.collection('vendors').snapshots();
   }
 
+  doneWithAction() {
+    Navigator.of(context).pop();
+  }
+
   Future<void> _toggleApproval(String docId, bool currentStatus) async {
     await FirebaseFirestore.instance
         .collection('vendors')
@@ -58,7 +62,7 @@ class _VendorsScreenState extends State<VendorsScreen> {
         message: 'Error banning vendor: $e',
         context: context,
         alert: CoolAlertType.error,
-        action: () => Navigator.of(context).pop(),
+        action: doneWithAction(),
       );
     }
   }
@@ -68,20 +72,34 @@ class _VendorsScreenState extends State<VendorsScreen> {
       title: 'Delete $storeName',
       content: 'Are you sure you want to delete this store?',
       context: context,
-      action: _deleteStore,
-      id: docId,
-      isIdInvolved: true,
+      action: () async {
+        await _deleteStore(docId);
+        if (mounted) {
+          Navigator.of(context).pop(); // Close the confirmation dialog
+        }
+      },
+      isIdInvolved: false,
     );
   }
 
   Future<void> _deleteStore(String docId) async {
-    await FirebaseFirestore.instance.collection('vendors').doc(docId).delete();
-    kCoolAlert(
-      message: 'You have successfully deleted the store',
-      context: context,
-      alert: CoolAlertType.success,
-      action: () => Navigator.of(context).pop(),
-    );
+    try {
+      await FirebaseFirestore.instance
+          .collection('vendors')
+          .doc(docId)
+          .delete();
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Store deleted successfully')),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Error deleting store: $e')),
+        );
+      }
+    }
   }
 
   @override

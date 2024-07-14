@@ -40,7 +40,7 @@ Future<void> areYouSureDialog({
             ),
           ),
           onPressed: () => Navigator.of(context).pop(),
-          child: const Text('Dismiss'),
+          child: const Text('No'),
         ),
       ],
     ),

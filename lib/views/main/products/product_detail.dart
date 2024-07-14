@@ -75,240 +75,223 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text(
-          'Product Detail',
-          style: TextStyle(
-              color: Colors.black87, fontWeight: FontWeight.bold, fontSize: 16),
-        ),
-        backgroundColor: Colors.white,
-        iconTheme: const IconThemeData(color: Colors.black87),
-        elevation: 1,
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back),
-          onPressed: () => Navigator.of(context).pop(),
-        ),
+        title: const Text('Product Details'),
+        actions: [
+          ElevatedButton.icon(
+            onPressed: () {
+              // Add your edit product action here
+            },
+            icon: const Icon(Icons.edit),
+            label: const Text('Edit Product',
+                textAlign: TextAlign.center,
+                style: TextStyle(color: Colors.white)),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.deepPurple,
+            ),
+          ),
+          const SizedBox(width: 16),
+        ],
       ),
       body: isLoadingProduct
           ? const Center(child: CircularProgressIndicator())
           : SingleChildScrollView(
-              padding: const EdgeInsets.all(16.0),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  _buildProductHeader(),
-                  const SizedBox(height: 16),
-                  _buildProductDescription(),
-                  const SizedBox(height: 16),
-                  Divider(color: Colors.grey[300]),
-                  const SizedBox(height: 16),
-                  _buildVendorInfo(),
-                ],
+              child: Padding(
+                padding: const EdgeInsets.all(24.0),
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Expanded(
+                      flex: 2,
+                      child: _buildProductDetails(),
+                    ),
+                    const SizedBox(width: 24),
+                    Expanded(
+                      flex: 1,
+                      child: _buildVendorInfo(),
+                    ),
+                  ],
+                ),
               ),
             ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: () {
-          // Add your edit product action here
-        },
-        child: const Icon(Icons.edit),
-        backgroundColor: Colors.deepPurple,
-      ),
     );
   }
 
-  Widget _buildProductHeader() {
-    return Row(
+  Widget _buildProductDetails() {
+    return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        _buildProductImage(),
-        const SizedBox(width: 16),
-        Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              _buildProductName(),
-              const SizedBox(height: 8),
-              _buildProductPrice(),
-              const SizedBox(height: 8),
-              _buildProductQuantity(),
-            ],
-          ),
-        ),
+        _buildProductImages(),
+        const SizedBox(height: 24),
+        _buildProductInfo(),
+        const SizedBox(height: 12),
+        _buildProductDescription(),
       ],
     );
   }
 
-  Widget _buildProductImage() {
-    return Container(
-      width: 150,
-      height: 150,
-      decoration: BoxDecoration(
-        border: Border.all(color: Colors.grey[300]!, width: 2),
-        borderRadius: BorderRadius.circular(10),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.grey.withOpacity(0.5),
-            spreadRadius: 2,
-            blurRadius: 5,
-            offset: const Offset(0, 3), // changes position of shadow
-          ),
-        ],
+  Widget _buildProductImages() {
+    return SizedBox(
+      height: 200,
+      child: ListView.builder(
+        scrollDirection: Axis.horizontal,
+        itemCount: (productSnapshot['imgUrls'] as List).length,
+        itemBuilder: (context, index) {
+          return Padding(
+            padding: const EdgeInsets.only(right: 16),
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(8),
+              child: Image.network(
+                productSnapshot['imgUrls'][index],
+                fit: BoxFit.cover,
+                width: 200,
+              ),
+            ),
+          );
+        },
       ),
-      child: ClipRRect(
-        borderRadius: BorderRadius.circular(10),
-        child: Image.network(
-          productSnapshot['imgUrls'][0],
-          fit: BoxFit.cover,
+    );
+  }
+
+  Widget _buildProductInfo() {
+    return Card(
+      elevation: 4,
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              productSnapshot['productName'],
+              style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+            ),
+            const SizedBox(height: 16),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text(
+                  'Price: \$${productSnapshot['price']}',
+                  style: const TextStyle(fontSize: 18, color: Colors.green),
+                ),
+                Text(
+                  'Quantity: ${productSnapshot['quantity']}',
+                  style: const TextStyle(fontSize: 18),
+                ),
+              ],
+            ),
+          ],
         ),
-      ),
-    );
-  }
-
-  Widget _buildProductName() {
-    return Text(
-      productSnapshot['productName'],
-      style: const TextStyle(
-        fontWeight: FontWeight.bold,
-        fontSize: 26,
-        color: Colors.black87,
-      ),
-    );
-  }
-
-  Widget _buildProductPrice() {
-    return Text(
-      '\$${productSnapshot['price']}',
-      style: const TextStyle(
-        fontSize: 24,
-        color: Colors.green,
-        fontWeight: FontWeight.bold,
-      ),
-    );
-  }
-
-  Widget _buildProductQuantity() {
-    return Text(
-      'Quantity: ${productSnapshot['quantity']}',
-      style: const TextStyle(
-        fontSize: 20,
-        color: Colors.black87,
       ),
     );
   }
 
   Widget _buildProductDescription() {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        const Text(
-          'Description:',
-          style: TextStyle(
-            fontWeight: FontWeight.bold,
-            fontSize: 22,
-            color: Colors.black87,
-          ),
+    return Card(
+      elevation: 4,
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Text(
+              'Description',
+              style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              productSnapshot['description'],
+              style: const TextStyle(fontSize: 16),
+            ),
+          ],
         ),
-        const SizedBox(height: 4),
-        Text(
-          productSnapshot['description'],
-          style: const TextStyle(fontSize: 18, color: Colors.black87),
-        ),
-      ],
+      ),
     );
   }
 
   Widget _buildVendorInfo() {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        const Text(
-          'Vendor Information',
-          style: TextStyle(
-            fontWeight: FontWeight.bold,
-            fontSize: 22,
-            color: Colors.black87,
-          ),
-        ),
-        const SizedBox(height: 8),
-        isLoadingVendor
-            ? const Center(child: CircularProgressIndicator())
-            : Card(
-                elevation: 3,
-                margin: const EdgeInsets.symmetric(vertical: 8),
-                child: Padding(
-                  padding: const EdgeInsets.all(16.0),
-                  child: Row(
+    return Card(
+      elevation: 4,
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Text(
+              'Vendor Information',
+              style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+            ),
+            const SizedBox(height: 16),
+            isLoadingVendor
+                ? const Center(child: CircularProgressIndicator())
+                : Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       _buildVendorImage(),
-                      const SizedBox(width: 16),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            _buildVendorDetail('Name', vendor.storeName),
-                            _buildVendorDetail('Email', vendor.email),
-                            _buildVendorDetail('Phone', vendor.phone),
-                            _buildVendorDetail('Address', vendor.address),
-                            _buildVendorDetail('City', vendor.city),
-                            _buildVendorDetail('State', vendor.state),
-                            _buildVendorDetail('Country', vendor.country),
-                          ],
-                        ),
-                      ),
+                      const SizedBox(height: 16),
+                      _buildVendorDetail('Store Name', vendor.storeName),
+                      _buildVendorDetail('Email', vendor.email),
+                      _buildVendorDetail('Phone', vendor.phone),
+                      _buildVendorDetail('Address', vendor.address),
+                      _buildVendorDetail('City', vendor.city),
+                      _buildVendorDetail('State', vendor.state),
+                      _buildVendorDetail('Country', vendor.country),
                     ],
                   ),
-                ),
-              ),
-      ],
+          ],
+        ),
+      ),
     );
   }
 
   Widget _buildVendorImage() {
-    return Container(
-      width: 100,
-      height: 100,
-      decoration: BoxDecoration(
-        border: Border.all(color: Colors.grey[300]!, width: 2),
-        borderRadius: BorderRadius.circular(10),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.grey.withOpacity(0.5),
-            spreadRadius: 2,
-            blurRadius: 5,
-            offset: const Offset(0, 3), // changes position of shadow
-          ),
-        ],
-      ),
-      child: ClipRRect(
-        borderRadius: BorderRadius.circular(10),
-        child: vendor.storeImgUrl != null
-            ? Image.network(
-                vendor.storeImgUrl!,
-                fit: BoxFit.cover,
-              )
-            : Container(),
+    return Center(
+      child: Container(
+        width: 150,
+        height: 150,
+        decoration: BoxDecoration(
+          border: Border.all(color: Colors.grey[300]!, width: 2),
+          borderRadius: BorderRadius.circular(75),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.grey.withOpacity(0.5),
+              spreadRadius: 2,
+              blurRadius: 5,
+              offset: const Offset(0, 3),
+            ),
+          ],
+        ),
+        child: ClipRRect(
+          borderRadius: BorderRadius.circular(75),
+          child: vendor.storeImgUrl != null
+              ? Image.network(
+                  vendor.storeImgUrl!,
+                  fit: BoxFit.cover,
+                )
+              : Container(color: Colors.grey[300]),
+        ),
       ),
     );
   }
 
   Widget _buildVendorDetail(String label, String value) {
     return Padding(
-      padding: const EdgeInsets.only(bottom: 4.0),
+      padding: const EdgeInsets.only(bottom: 8.0),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
-            '$label: ',
-            style: const TextStyle(
-              fontSize: 18,
-              fontWeight: FontWeight.bold,
-              color: Colors.black87,
+          SizedBox(
+            width: 100,
+            child: Text(
+              '$label:',
+              style: const TextStyle(
+                fontWeight: FontWeight.bold,
+                fontSize: 16,
+              ),
             ),
           ),
           Expanded(
             child: Text(
               value,
-              style: const TextStyle(fontSize: 18, color: Colors.black87),
+              style: const TextStyle(fontSize: 16),
             ),
           ),
         ],

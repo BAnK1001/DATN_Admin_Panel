@@ -1,7 +1,5 @@
-import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
-import 'package:shoes_shop_admin/resources/font_manager.dart';
-import 'package:shoes_shop_admin/resources/styles_manager.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:video_player/video_player.dart';
 
 class RefundDetailsScreen extends StatefulWidget {
@@ -185,155 +183,151 @@ class _RefundDetailsScreenState extends State<RefundDetailsScreen> {
   }
 
   @override
-  void dispose() {
-    _videoController?.dispose();
-    super.dispose();
-  }
-
-  @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Refund Details'),
-        actions: [
-          FutureBuilder<DocumentSnapshot>(
-            future: _refundDetails,
-            builder: (context, snapshot) {
-              if (snapshot.connectionState == ConnectionState.waiting) {
-                return Container();
-              }
-              if (snapshot.hasError) {
-                return Container();
-              }
-              if (!snapshot.hasData || !snapshot.data!.exists) {
-                return Container();
-              }
+      body: Row(
+        children: [
+          // Main content
+          Expanded(
+            child: FutureBuilder<DocumentSnapshot>(
+              future: _refundDetails,
+              builder: (context, snapshot) {
+                if (snapshot.connectionState == ConnectionState.waiting) {
+                  return const Center(child: CircularProgressIndicator());
+                }
+                if (snapshot.hasError) {
+                  return Center(child: Text('Error: ${snapshot.error}'));
+                }
+                if (!snapshot.hasData || !snapshot.data!.exists) {
+                  return const Center(child: Text('Refund not found'));
+                }
 
-              var refundData = snapshot.data!.data() as Map<String, dynamic>;
-              int currentStatus = refundData['status'];
-              if (currentStatus == 1) {
-                return Container();
-              }
+                var refundData = snapshot.data!.data() as Map<String, dynamic>;
+                fetchAdditionalData(
+                    refundData['customerId'], refundData['vendorId']);
 
-              return PopupMenuButton<int>(
-                onSelected: (int newStatus) {
-                  if (newStatus != 0 || currentStatus == 0) {
-                    showConfirmationDialog(context, newStatus);
-                  } else {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(
-                          content: Text('Cannot update status to Requested.')),
-                    );
-                  }
-                },
-                itemBuilder: (BuildContext context) {
-                  // Create the list of menu items based on the current status
-                  List<PopupMenuEntry<int>> menuItems = [];
-                  List<int> statusOptions = [0, 1, 2, 3];
-
-                  // Remove the current status from the list
-                  statusOptions.remove(currentStatus);
-
-                  for (int status in statusOptions) {
-                    menuItems.add(PopupMenuItem<int>(
-                      value: status,
-                      child: Text(getStatusText(status)),
-                    ));
-                  }
-
-                  return menuItems;
-                },
-              );
-            },
+                return SingleChildScrollView(
+                  child: Padding(
+                    padding: const EdgeInsets.all(32.0),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
+                          children: [
+                            IconButton(
+                              icon: const Icon(Icons.arrow_back),
+                              onPressed: () {
+                                Navigator.of(context).pop();
+                              },
+                            ),
+                            const SizedBox(width: 16),
+                            const Text(
+                              'Refund Details',
+                              style: TextStyle(
+                                  fontSize: 32, fontWeight: FontWeight.bold),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 32),
+                        Row(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  buildInfoCard('Refund Information', [
+                                    buildInfoRow(
+                                        'Reason',
+                                        refundData['reason'] ??
+                                            'No reason provided'),
+                                    buildInfoRow('Amount',
+                                        '\$${refundData['amount'].toString()}'),
+                                    buildInfoRow('Status',
+                                        getStatusText(refundData['status'])),
+                                  ]),
+                                  SizedBox(height: 24),
+                                  buildInfoCard('Customer Information', [
+                                    buildInfoRow(
+                                        'Name',
+                                        customerName.isEmpty
+                                            ? 'Loading...'
+                                            : customerName),
+                                    buildInfoRow(
+                                        'ID', refundData['customerId']),
+                                  ]),
+                                  SizedBox(height: 24),
+                                  buildInfoCard('Vendor Information', [
+                                    buildInfoRow(
+                                        'Name',
+                                        vendorName.isEmpty
+                                            ? 'Loading...'
+                                            : vendorName),
+                                    buildInfoRow('ID', refundData['vendorId']),
+                                  ]),
+                                ],
+                              ),
+                            ),
+                            SizedBox(width: 32),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  buildMediaCard(
+                                    mediaType: refundData['mediaType'],
+                                    mediaUrl: refundData['mediaUrl'],
+                                    videoController: _videoController,
+                                  ),
+                                  SizedBox(height: 24),
+                                  buildVendorCheckNotification(
+                                      refundData['isVendorCheck']),
+                                  SizedBox(height: 24),
+                                  buildActionButtons(refundData['status']),
+                                ],
+                              ),
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
+                  ),
+                );
+              },
+            ),
           ),
         ],
-      ),
-      body: FutureBuilder<DocumentSnapshot>(
-        future: _refundDetails,
-        builder: (context, snapshot) {
-          if (snapshot.connectionState == ConnectionState.waiting) {
-            return const Center(child: CircularProgressIndicator());
-          }
-          if (snapshot.hasError) {
-            return Center(child: Text('Error: ${snapshot.error}'));
-          }
-          if (!snapshot.hasData || !snapshot.data!.exists) {
-            return const Center(child: Text('Refund not found'));
-          }
-
-          var refundData = snapshot.data!.data() as Map<String, dynamic>;
-          fetchAdditionalData(refundData['customerId'], refundData['vendorId']);
-
-          if (refundData['mediaType'] == 'video') {
-            _videoController =
-                VideoPlayerController.network(refundData['mediaUrl'])
-                  ..initialize().then((_) {
-                    setState(() {});
-                  });
-          }
-
-          return SingleChildScrollView(
-            child: Padding(
-              padding: const EdgeInsets.all(16.0),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    'Refund Information',
-                    style: getMediumStyle(
-                        color: Colors.black, fontSize: FontSize.s20),
-                  ),
-                  const SizedBox(height: 16),
-                  buildDetailCard(
-                    icon: Icons.report_problem,
-                    title: 'Reason',
-                    content: refundData['reason'] ?? 'No reason provided',
-                  ),
-                  buildDetailCard(
-                    icon: Icons.comment,
-                    title: 'Comment',
-                    content: refundData['comment'] ?? 'No comment provided',
-                  ),
-                  buildDetailCard(
-                    icon: Icons.attach_money,
-                    title: 'Amount',
-                    content: refundData['amount'].toString(),
-                  ),
-                  buildDetailCard(
-                    icon: Icons.person,
-                    title: 'Customer',
-                    content: customerName.isEmpty ? 'Loading...' : customerName,
-                  ),
-                  buildDetailCard(
-                    icon: Icons.store,
-                    title: 'Vendor',
-                    content: vendorName.isEmpty ? 'Loading...' : vendorName,
-                  ),
-                  buildMediaCard(
-                    mediaType: refundData['mediaType'],
-                    mediaUrl: refundData['mediaUrl'],
-                    videoController: _videoController,
-                  ),
-                  buildVendorCheckNotification(refundData['isVendorCheck']),
-                ],
-              ),
-            ),
-          );
-        },
       ),
     );
   }
 
-  Widget buildDetailCard({
-    required IconData icon,
-    required String title,
-    required String content,
-  }) {
+  Widget buildInfoCard(String title, List<Widget> children) {
     return Card(
-      child: ListTile(
-        leading: Icon(icon, color: Colors.blue),
-        title: Text(title, style: getMediumStyle(color: Colors.black)),
-        subtitle: Text(content, style: getRegularStyle(color: Colors.black)),
+      elevation: 2,
+      child: Padding(
+        padding: EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(title,
+                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+            SizedBox(height: 16),
+            ...children,
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget buildInfoRow(String label, String value) {
+    return Padding(
+      padding: EdgeInsets.symmetric(vertical: 8),
+      child: Row(
+        children: [
+          Expanded(
+              child:
+                  Text(label, style: TextStyle(fontWeight: FontWeight.bold))),
+          Expanded(child: Text(value)),
+        ],
       ),
     );
   }
@@ -403,5 +397,27 @@ class _RefundDetailsScreenState extends State<RefundDetailsScreen> {
         ),
       );
     }
+  }
+
+  Widget buildActionButtons(int currentStatus) {
+    return Row(
+      children: [
+        ElevatedButton(
+          onPressed: currentStatus != 1
+              ? () => showConfirmationDialog(context, 1)
+              : null,
+          style: ElevatedButton.styleFrom(backgroundColor: Colors.green),
+          child: const Text('Approve'),
+        ),
+        const SizedBox(width: 16),
+        ElevatedButton(
+          onPressed: currentStatus != 2
+              ? () => showConfirmationDialog(context, 2)
+              : null,
+          style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
+          child: const Text('Deny'),
+        ),
+      ],
+    );
   }
 }
