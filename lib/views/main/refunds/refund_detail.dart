@@ -107,37 +107,37 @@ class _RefundDetailsScreenState extends State<RefundDetailsScreen> {
 
   Future<void> processRefund(
       String customerId, double amount, String refundId) async {
-    DocumentReference customerWalletRef =
-        FirebaseFirestore.instance.collection('wallets').doc(customerId);
+    try {
+      await FirebaseFirestore.instance.runTransaction((transaction) async {
+        DocumentReference customerRef =
+            FirebaseFirestore.instance.collection('customers').doc(customerId);
+        DocumentSnapshot customerSnapshot = await transaction.get(customerRef);
 
-    await FirebaseFirestore.instance.runTransaction((transaction) async {
-      DocumentSnapshot walletSnapshot =
-          await transaction.get(customerWalletRef);
+        if (customerSnapshot.exists) {
+          double currentRefundAmount =
+              customerSnapshot.get('refundAmount') ?? 0.0;
+          transaction.update(
+              customerRef, {'refundAmount': currentRefundAmount + amount});
+        } else {
+          throw Exception('Customer not found');
+        }
 
-      if (walletSnapshot.exists) {
-        double currentBalance = walletSnapshot['balance'];
-        double newBalance = currentBalance + amount;
+        DocumentReference walletTransactionRef =
+            FirebaseFirestore.instance.collection('walletTransactions').doc();
 
-        transaction.update(customerWalletRef, {'balance': newBalance});
-      } else {
-        transaction.set(customerWalletRef, {'balance': amount});
-      }
-
-      transaction.set(
-        FirebaseFirestore.instance.collection('walletTransactions').doc(),
-        {
-          'transactionId': FirebaseFirestore.instance
-              .collection('walletTransactions')
-              .doc()
-              .id,
+        transaction.set(walletTransactionRef, {
+          'transactionId': walletTransactionRef.id,
           'refundId': refundId,
           'customerId': customerId,
           'amount': amount,
           'transactionDate': DateTime.now(),
-          'status': 1,
-        },
-      );
-    });
+          'type': 'refund',
+          'status': 'completed',
+        });
+      });
+    } catch (error) {
+      print('Error processing refund: $error');
+    }
   }
 
   String getStatusText(int status) {

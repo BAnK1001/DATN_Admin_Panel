@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:syncfusion_flutter_charts/charts.dart';
-
 import '../../models/app_data.dart';
 
 class AppDataGraph extends StatelessWidget {
@@ -24,13 +23,13 @@ class AppDataGraph extends StatelessWidget {
         child: SfCartesianChart(
           primaryXAxis: CategoryAxis(),
           // Chart title
-          title: ChartTitle(
+          title: const ChartTitle(
             text: 'ShoesShop Analysis for app data',
           ),
-          legend: Legend(isVisible: true),
+          legend: const Legend(isVisible: true),
           // Enable tooltip
           tooltipBehavior: TooltipBehavior(enable: true),
-          series: <ChartSeries<AppData, String>>[
+          series: <CartesianSeries<dynamic, dynamic>>[
             LineSeries<AppData, String>(
               dataSource: data,
               xValueMapper: (AppData sales, _) => sales.title,
