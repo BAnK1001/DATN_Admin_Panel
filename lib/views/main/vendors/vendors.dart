@@ -37,12 +37,6 @@ class _VendorsScreenState extends State<VendorsScreen> {
         .collection('vendors')
         .doc(docId)
         .update({'isApproved': !currentStatus});
-    kCoolAlert(
-      message: 'You have successfully set the approval to ${!currentStatus}',
-      context: context,
-      alert: CoolAlertType.success,
-      action: () => Navigator.of(context).pop(),
-    );
   }
 
   Future<void> _banVendor(String docId) async {
@@ -51,19 +45,8 @@ class _VendorsScreenState extends State<VendorsScreen> {
           .collection('vendors')
           .doc(docId)
           .update({'isBanned': true});
-      kCoolAlert(
-        message: 'Vendor has been successfully banned.',
-        context: context,
-        alert: CoolAlertType.success,
-        action: () => Navigator.of(context).pop(),
-      );
     } catch (e) {
-      kCoolAlert(
-        message: 'Error banning vendor: $e',
-        context: context,
-        alert: CoolAlertType.error,
-        action: doneWithAction(),
-      );
+      doneWithAction();
     }
   }
 
@@ -74,9 +57,6 @@ class _VendorsScreenState extends State<VendorsScreen> {
       context: context,
       action: () async {
         await _deleteStore(docId);
-        if (mounted) {
-          Navigator.of(context).pop(); // Close the confirmation dialog
-        }
       },
       isIdInvolved: false,
     );
