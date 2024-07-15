@@ -49,13 +49,6 @@ class _CashOutScreenState extends State<CashOutScreen> {
       String message = status
           ? 'The cash out has been approved successfully.'
           : 'The cash out has been rejected successfully.';
-
-      kCoolAlert(
-        message: message,
-        context: context,
-        alert: CoolAlertType.success,
-        action: () => Navigator.of(context).pop(),
-      );
     });
   }
 
@@ -64,14 +57,7 @@ class _CashOutScreenState extends State<CashOutScreen> {
         .collection('cash_outs')
         .doc(id)
         .delete()
-        .whenComplete(() {
-      kCoolAlert(
-        message: 'You have successfully deleted the cash out',
-        context: context,
-        alert: CoolAlertType.success,
-        action: () => Navigator.of(context).pop(),
-      );
-    });
+        .whenComplete(() {});
   }
 
   void _showDeleteDialog(String id) {
