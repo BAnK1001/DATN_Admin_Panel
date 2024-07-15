@@ -29,7 +29,16 @@ Future<void> areYouSureDialog({
               borderRadius: BorderRadius.circular(10),
             ),
           ),
-          onPressed: () => isIdInvolved ? action(id) : action(),
+          onPressed: () async {
+            Navigator.of(context).pop(); // This will close the dialog
+
+            if (isIdInvolved) {
+              await action(id);
+            } else {
+              await action();
+            }
+            // ignore: use_build_context_synchronously
+          },
           child: const Text('Yes'),
         ),
         ElevatedButton(
