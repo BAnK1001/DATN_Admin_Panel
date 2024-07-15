@@ -33,12 +33,6 @@ class _ShipperScreenState extends State<ShipperScreen> {
         .collection('shippers')
         .doc(docId)
         .update({'isApproved': !currentStatus});
-    kCoolAlert(
-      message: 'You have successfully set the approval to ${!currentStatus}',
-      context: context,
-      alert: CoolAlertType.success,
-      action: () => Navigator.of(context).pop(),
-    );
   }
 
   Future<void> _deleteShipper(String id) async {
@@ -46,14 +40,7 @@ class _ShipperScreenState extends State<ShipperScreen> {
         .collection('shippers')
         .doc(id)
         .delete()
-        .whenComplete(() {
-      kCoolAlert(
-        message: 'You have successfully deleted the shipper',
-        context: context,
-        alert: CoolAlertType.success,
-        action: () => Navigator.of(context).pop(),
-      );
-    });
+        .whenComplete(() {});
   }
 
   void _showDeleteDialog(String id) {
