@@ -68,16 +68,7 @@ class _RefundScreenState extends State<RefundScreen> {
         .collection('refunds')
         .doc(id)
         .delete()
-        .whenComplete(() {
-      if (mounted) {
-        kCoolAlert(
-          message: 'You have successfully deleted the refund',
-          context: context,
-          alert: CoolAlertType.success,
-          action: () => Navigator.of(context).pop(),
-        );
-      }
-    });
+        .whenComplete(() {});
   }
 
   void _showDeleteDialog(String id) {
