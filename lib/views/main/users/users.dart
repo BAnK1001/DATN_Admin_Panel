@@ -23,18 +23,7 @@ class _UsersScreenState extends State<UsersScreen> {
   Future<void> _deleteCustomer(String id) async {
     try {
       await FirebaseFirestore.instance.collection('customers').doc(id).delete();
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Customer deleted successfully')),
-        );
-      }
-    } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error deleting customer: $e')),
-        );
-      }
-    }
+    } catch (e) {}
   }
 
   void _showDeleteDialog(String id) {
@@ -44,9 +33,6 @@ class _UsersScreenState extends State<UsersScreen> {
       context: context,
       action: () async {
         await _deleteCustomer(id);
-        if (mounted) {
-          Navigator.of(context).pop();
-        }
       },
       isIdInvolved: false,
     );
