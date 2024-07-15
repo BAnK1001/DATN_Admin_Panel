@@ -55,7 +55,6 @@ class _CarouselBannersState extends State<CarouselBanners> {
 
   // action after uploading banner
   uploadDone() {
-    Navigator.of(context).pop();
     setState(() {
       isProcessing = false;
       isImgSelected = false;
@@ -79,20 +78,10 @@ class _CarouselBannersState extends State<CarouselBanners> {
           'img_url': downloadLink,
         },
       ).whenComplete(() {
-        kCoolAlert(
-          message: 'Image uploaded successfully',
-          context: context,
-          alert: CoolAlertType.success,
-          action: uploadDone,
-        );
+        uploadDone();
       });
     } catch (e) {
-      kCoolAlert(
-        message: 'Image not uploaded successfully',
-        context: context,
-        alert: CoolAlertType.error,
-        action: uploadDone,
-      );
+      uploadDone();
     }
   }
 
@@ -109,21 +98,8 @@ class _CarouselBannersState extends State<CarouselBanners> {
     try {
       await _firebase.collection('banners').doc(id).delete().whenComplete(() {
         EasyLoading.dismiss();
-        kCoolAlert(
-          message: 'Banner deleted successfully',
-          context: context,
-          alert: CoolAlertType.success,
-          action: doneDeleting,
-        );
       });
-    } catch (e) {
-      kCoolAlert(
-        message: 'Banner not deleted successfully',
-        context: context,
-        alert: CoolAlertType.error,
-        action: doneDeleting,
-      );
-    }
+    } catch (e) {}
   }
 
   // delete dialog
