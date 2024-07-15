@@ -51,14 +51,7 @@ class _ProductScreenState extends State<ProductScreen> {
         .collection('products')
         .doc(id)
         .delete()
-        .whenComplete(() {
-      kCoolAlert(
-        message: 'You have successfully deleted the product',
-        context: context,
-        alert: CoolAlertType.success,
-        action: () => Navigator.of(context).pop(),
-      );
-    });
+        .whenComplete(() {});
   }
 
   void _showDeleteDialog(String id) {
