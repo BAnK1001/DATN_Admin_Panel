@@ -55,7 +55,6 @@ class _CategoriesScreenState extends State<CategoriesScreen> {
   }
 
   void uploadDone() {
-    Navigator.of(context).pop();
     setState(() {
       isProcessing = false;
       isImgSelected = false;
@@ -87,21 +86,10 @@ class _CategoriesScreenState extends State<CategoriesScreen> {
           'img_url': downloadLink,
           'category': categoryName.text.trim(),
         });
-
-        kCoolAlert(
-          message: 'Category uploaded successfully',
-          context: context,
-          alert: CoolAlertType.success,
-          action: uploadDone,
-        );
       });
+      uploadDone();
     } catch (e) {
-      kCoolAlert(
-        message: 'Category not uploaded successfully',
-        context: context,
-        alert: CoolAlertType.error,
-        action: uploadDone,
-      );
+      uploadDone();
     }
   }
 
@@ -110,26 +98,12 @@ class _CategoriesScreenState extends State<CategoriesScreen> {
   }
 
   Future<void> deleteCategory(String id) async {
-    Navigator.of(context).pop();
     EasyLoading.show(status: 'loading...');
 
     try {
       await _firebase.collection('categories').doc(id).delete();
       EasyLoading.dismiss();
-      kCoolAlert(
-        message: 'Category deleted successfully',
-        context: context,
-        alert: CoolAlertType.success,
-        action: doneDeleting,
-      );
-    } catch (e) {
-      kCoolAlert(
-        message: 'Category not deleted successfully',
-        context: context,
-        alert: CoolAlertType.error,
-        action: doneDeleting,
-      );
-    }
+    } catch (e) {}
   }
 
   void deleteDialog({required String id}) {
