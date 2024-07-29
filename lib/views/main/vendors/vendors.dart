@@ -1,16 +1,14 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:cool_alert/cool_alert.dart';
 import 'package:flutter/material.dart';
 import '../../../constants/color.dart';
 import '../../../resources/assets_manager.dart';
 import '../../../resources/font_manager.dart';
 import '../../../resources/styles_manager.dart';
 import '../../widgets/are_you_sure_dialog.dart';
-import '../../widgets/kcool_alert.dart';
 import '../../widgets/loading_widget.dart';
 
 class VendorsScreen extends StatefulWidget {
-  const VendorsScreen({Key? key}) : super(key: key);
+  const VendorsScreen({super.key});
 
   @override
   State<VendorsScreen> createState() => _VendorsScreenState();
@@ -125,7 +123,7 @@ class _VendorsScreenState extends State<VendorsScreen> {
                   _vendorStream = FirebaseFirestore.instance
                       .collection('vendors')
                       .where('storeName', isGreaterThanOrEqualTo: value)
-                      .where('storeName', isLessThan: value + 'z')
+                      .where('storeName', isLessThan: '${value}z')
                       .snapshots();
                 });
               },

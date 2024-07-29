@@ -1,6 +1,5 @@
 import 'dart:typed_data';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:cool_alert/cool_alert.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/material.dart';
 import 'package:shoes_shop_admin/helpers/screen_size.dart';
@@ -13,10 +12,9 @@ import 'package:shoes_shop_admin/resources/styles_manager.dart';
 import 'package:shoes_shop_admin/constants/color.dart';
 import 'package:shoes_shop_admin/resources/font_manager.dart';
 import '../../components/grid_carousel_banners.dart';
-import '../../widgets/kcool_alert.dart';
 
 class CarouselBanners extends StatefulWidget {
-  const CarouselBanners({Key? key}) : super(key: key);
+  const CarouselBanners({super.key});
 
   @override
   State<CarouselBanners> createState() => _CarouselBannersState();

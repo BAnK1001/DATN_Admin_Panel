@@ -1,8 +1,6 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:cool_alert/cool_alert.dart';
 import 'package:flutter/material.dart';
 import 'package:shoes_shop_admin/views/widgets/are_you_sure_dialog.dart';
-import 'package:shoes_shop_admin/views/widgets/kcool_alert.dart';
 import 'package:shoes_shop_admin/views/widgets/loading_widget.dart';
 import '../../../resources/assets_manager.dart';
 import '../../../resources/font_manager.dart';

@@ -1,16 +1,14 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:cool_alert/cool_alert.dart';
 import 'package:flutter/material.dart';
 import '../../../constants/color.dart';
 import '../../../resources/assets_manager.dart';
 import '../../../resources/font_manager.dart';
 import '../../../resources/styles_manager.dart';
 import '../../widgets/are_you_sure_dialog.dart';
-import '../../widgets/kcool_alert.dart';
 import '../../widgets/loading_widget.dart';
 
 class ShipperScreen extends StatefulWidget {
-  const ShipperScreen({Key? key}) : super(key: key);
+  const ShipperScreen({super.key});
 
   @override
   State<ShipperScreen> createState() => _ShipperScreenState();
@@ -97,7 +95,7 @@ class _ShipperScreenState extends State<ShipperScreen> {
                   _shippersStream = FirebaseFirestore.instance
                       .collection('shippers')
                       .where('fullname', isGreaterThanOrEqualTo: value)
-                      .where('fullname', isLessThan: value + 'z')
+                      .where('fullname', isLessThan: '${value}z')
                       .snapshots();
                 });
               },

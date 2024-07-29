@@ -1,6 +1,5 @@
 import 'dart:typed_data';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:cool_alert/cool_alert.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/material.dart';
 import 'package:shoes_shop_admin/helpers/screen_size.dart';
@@ -13,12 +12,11 @@ import '../../../resources/styles_manager.dart';
 import 'package:file_picker/file_picker.dart';
 import '../../components/grid_categories.dart';
 import '../../widgets/are_you_sure_dialog.dart';
-import '../../widgets/kcool_alert.dart';
 import '../../widgets/msg_snackbar.dart';
 import 'package:flutter_easyloading/flutter_easyloading.dart';
 
 class CategoriesScreen extends StatefulWidget {
-  const CategoriesScreen({Key? key}) : super(key: key);
+  const CategoriesScreen({super.key});
 
   @override
   State<CategoriesScreen> createState() => _CategoriesScreenState();

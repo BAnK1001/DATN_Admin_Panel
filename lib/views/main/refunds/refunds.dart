@@ -1,5 +1,4 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:cool_alert/cool_alert.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_slidable/flutter_slidable.dart';
@@ -8,11 +7,10 @@ import 'package:shoes_shop_admin/resources/font_manager.dart';
 import 'package:shoes_shop_admin/resources/styles_manager.dart';
 import 'package:shoes_shop_admin/views/main/refunds/refund_detail.dart';
 import 'package:shoes_shop_admin/views/widgets/are_you_sure_dialog.dart';
-import 'package:shoes_shop_admin/views/widgets/kcool_alert.dart';
 import 'package:shoes_shop_admin/views/widgets/loading_widget.dart';
 
 class RefundScreen extends StatefulWidget {
-  const RefundScreen({Key? key}) : super(key: key);
+  const RefundScreen({super.key});
 
   @override
   State<RefundScreen> createState() => _RefundScreenState();
@@ -40,7 +38,9 @@ class _RefundScreenState extends State<RefundScreen> {
 
       customerName = customerDoc['fullname'];
     } catch (e) {
-      print('Error fetching customer name: $e');
+      if (kDebugMode) {
+        print('Error fetching customer name: $e');
+      }
     }
 
     return customerName;
@@ -57,7 +57,9 @@ class _RefundScreenState extends State<RefundScreen> {
 
       vendorName = vendorDoc['storeName'];
     } catch (e) {
-      print('Error fetching vendor name: $e');
+      if (kDebugMode) {
+        print('Error fetching vendor name: $e');
+      }
     }
 
     return vendorName;

@@ -1,10 +1,8 @@
-import 'package:cool_alert/cool_alert.dart';
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:intl/intl.dart' as intl;
 import 'package:shoes_shop_admin/views/main/products/product_detail.dart';
 import 'package:shoes_shop_admin/views/widgets/are_you_sure_dialog.dart';
-import 'package:shoes_shop_admin/views/widgets/kcool_alert.dart';
 import '../../widgets/loading_widget.dart';
 import '../../../constants/color.dart';
 import '../../../resources/assets_manager.dart';
@@ -12,7 +10,7 @@ import '../../../resources/font_manager.dart';
 import '../../../resources/styles_manager.dart';
 
 class ProductScreen extends StatefulWidget {
-  const ProductScreen({Key? key}) : super(key: key);
+  const ProductScreen({super.key});
 
   @override
   State<ProductScreen> createState() => _ProductScreenState();
@@ -108,7 +106,7 @@ class _ProductScreenState extends State<ProductScreen> {
                   _productStream = FirebaseFirestore.instance
                       .collection('products')
                       .where('productName', isGreaterThanOrEqualTo: value)
-                      .where('productName', isLessThan: value + 'z')
+                      .where('productName', isLessThan: '${value}z')
                       .snapshots();
                 });
               },
