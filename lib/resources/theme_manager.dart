@@ -279,6 +279,6 @@ ThemeData getDarkTheme() {
         .copyWith(
           secondary: Colors.grey,
         )
-        .copyWith(background: backgroundDark),
+        .copyWith(surface: backgroundDark),
   );
 }
