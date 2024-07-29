@@ -30,8 +30,8 @@ class CategoryDataPie extends StatelessWidget {
 /// Returns the circular  chart with pie series.
 SfCircularChart _buildDefaultPieChart(List<ChartSampleData> chartSampleData) {
   return SfCircularChart(
-    title: ChartTitle(text: 'Categories with Products Quantity'),
-    legend: Legend(isVisible: true),
+    title: const ChartTitle(text: 'Categories with Products Quantity'),
+    legend: const Legend(isVisible: true),
     series: _getDefaultPieSeries(chartSampleData),
   );
 }

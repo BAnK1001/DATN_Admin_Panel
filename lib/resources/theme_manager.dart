@@ -49,11 +49,11 @@ ThemeData getLightTheme() {
 
     outlinedButtonTheme: OutlinedButtonThemeData(
       style: ButtonStyle(
-        padding: MaterialStateProperty.all<EdgeInsets>(
+        padding: WidgetStateProperty.all<EdgeInsets>(
           const EdgeInsets.all(24),
         ),
-        backgroundColor: MaterialStateProperty.all<Color>(primaryColor),
-        foregroundColor: MaterialStateProperty.all<Color>(Colors.white),
+        backgroundColor: WidgetStateProperty.all<Color>(primaryColor),
+        foregroundColor: WidgetStateProperty.all<Color>(Colors.white),
       ),
     ),
 
@@ -145,7 +145,7 @@ ThemeData getLightTheme() {
         .copyWith(
           secondary: Colors.grey,
         )
-        .copyWith(background: backgroundLite),
+        .copyWith(surface: backgroundLite),
   );
 }
 

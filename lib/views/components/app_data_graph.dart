@@ -21,7 +21,7 @@ class AppDataGraph extends StatelessWidget {
           borderRadius: BorderRadius.circular(20),
         ),
         child: SfCartesianChart(
-          primaryXAxis: CategoryAxis(),
+          primaryXAxis: const CategoryAxis(),
           // Chart title
           title: const ChartTitle(
             text: 'ShoesShop Analysis for app data',

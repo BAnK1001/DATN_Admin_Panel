@@ -8,7 +8,7 @@ import '../../resources/assets_manager.dart';
 import '../main/main_screen.dart';
 
 class AuthenticationScreen extends StatelessWidget {
-  const AuthenticationScreen({Key? key}) : super(key: key);
+  const AuthenticationScreen({super.key});
 
   @override
   Widget build(BuildContext context) {

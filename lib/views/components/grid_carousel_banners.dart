@@ -6,10 +6,10 @@ import '../widgets/loading_widget.dart';
 
 class CarouselBannerGrid extends StatelessWidget {
   const CarouselBannerGrid({
-    Key? key,
+    super.key,
     required this.deleteDialog,
     required this.cxt,
-  }) : super(key: key);
+  });
 
   final Function deleteDialog;
   final BuildContext cxt;

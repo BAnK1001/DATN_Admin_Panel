@@ -7,13 +7,13 @@ import '../main/main_screen.dart';
 
 class BuildDashboardContainer extends StatelessWidget {
   const BuildDashboardContainer({
-    Key? key,
+    super.key,
     required this.title,
     required this.value,
     required this.color,
     required this.icon,
     required this.index,
-  }) : super(key: key);
+  });
   final String title;
   final int value;
   final Color color;

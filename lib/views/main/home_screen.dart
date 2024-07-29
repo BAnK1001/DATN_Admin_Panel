@@ -8,7 +8,7 @@ import '../components/category_pie_data.dart';
 import '../widgets/build_dashboard_container.dart';
 
 class HomeScreen extends StatefulWidget {
-  const HomeScreen({Key? key}) : super(key: key);
+  const HomeScreen({super.key});
 
   @override
   State<HomeScreen> createState() => _HomeScreenState();

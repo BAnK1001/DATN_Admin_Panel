@@ -1,4 +1,5 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:flutter/foundation.dart';
 
 class UserController {
   final FirebaseFirestore _firebaseFirestore = FirebaseFirestore.instance;
@@ -19,7 +20,9 @@ class UserController {
     try {
       await _firebaseFirestore.collection('customers').doc(id).delete();
     } catch (e) {
-      print('Error deleting customer: $e');
+      if (kDebugMode) {
+        print('Error deleting customer: $e');
+      }
     }
   }
 }

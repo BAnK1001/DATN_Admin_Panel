@@ -2,13 +2,13 @@ import 'package:flutter/material.dart';
 import 'package:shoes_shop_admin/constants/color.dart';
 
 class AnimatedRail extends StatelessWidget {
-  const AnimatedRail({Key? key, required this.widget, required this.fnc})
-      : super(key: key);
+  const AnimatedRail({super.key, required this.widget, required this.fnc});
   final Widget widget;
   final VoidCallback fnc;
 
   @override
   Widget build(BuildContext context) {
+    // Obtain the current animation from NavigationRail
     final animation = NavigationRail.extendedAnimation(context);
     return AnimatedBuilder(
       animation: animation,
@@ -20,7 +20,7 @@ class AnimatedRail extends StatelessWidget {
             backgroundColor: accentColor,
             onPressed: () => fnc(),
             label: widget,
-            isExtended: animation.status != animation.isDismissed,
+            isExtended: animation.status == AnimationStatus.completed,
           ),
         ),
       ),

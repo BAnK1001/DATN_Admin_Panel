@@ -6,10 +6,10 @@ import '../widgets/loading_widget.dart';
 
 class CategoryGrid extends StatelessWidget {
   const CategoryGrid({
-    Key? key,
+    super.key,
     required this.deleteDialog,
     required this.cxt,
-  }) : super(key: key);
+  });
 
   final Function deleteDialog;
   final BuildContext cxt;

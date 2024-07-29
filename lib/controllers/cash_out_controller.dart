@@ -27,9 +27,11 @@ class CashOutController {
         });
       }
 
-      String message = status
-          ? 'The cash out has been approved successfully.'
-          : 'The cash out has been rejected successfully.';
+      await FirebaseFirestore.instance.collection('cash_outs').doc(id).update(
+        {
+          'updatedAt': DateTime.now(),
+        },
+      );
     });
   }
 

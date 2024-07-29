@@ -1,12 +1,11 @@
 import 'dart:typed_data';
-import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/material.dart';
+import 'package:file_picker/file_picker.dart';
+import 'package:flutter_easyloading/flutter_easyloading.dart';
+import 'package:shoes_shop_admin/controllers/carousel_banners_controller.dart';
 import 'package:shoes_shop_admin/helpers/screen_size.dart';
 import 'package:shoes_shop_admin/views/widgets/are_you_sure_dialog.dart';
 import 'package:shoes_shop_admin/views/widgets/loading_widget.dart';
-import 'package:file_picker/file_picker.dart';
-import 'package:flutter_easyloading/flutter_easyloading.dart';
 import 'package:shoes_shop_admin/resources/assets_manager.dart';
 import 'package:shoes_shop_admin/resources/styles_manager.dart';
 import 'package:shoes_shop_admin/constants/color.dart';
@@ -25,17 +24,15 @@ class _CarouselBannersState extends State<CarouselBanners> {
   Uint8List? fileBytes;
   String? fileName;
   bool isProcessing = false;
-  final FirebaseStorage _firebaseStorage = FirebaseStorage.instance;
-  final FirebaseFirestore _firebase = FirebaseFirestore.instance;
+  final CarouselBannersController _controller = CarouselBannersController();
 
-  // select image
-  Future selectImage() async {
-    FilePickerResult? pickedImage = await FilePicker.platform
-        .pickFiles(allowMultiple: false, type: FileType.image);
+  Future<void> selectImage() async {
+    FilePickerResult? pickedImage = await FilePicker.platform.pickFiles(
+      allowMultiple: false,
+      type: FileType.image,
+    );
 
-    if (pickedImage == null) {
-      return;
-    } else {
+    if (pickedImage != null) {
       setState(() {
         isImgSelected = true;
         fileBytes = pickedImage.files.first.bytes;
@@ -44,69 +41,44 @@ class _CarouselBannersState extends State<CarouselBanners> {
     }
   }
 
-  // reset picked image
   void resetIsImagePicked() {
     setState(() {
       isImgSelected = false;
     });
   }
 
-  // action after uploading banner
-  uploadDone() {
-    setState(() {
-      isProcessing = false;
-      isImgSelected = false;
-    });
-  }
-
-  // upload banner image
   Future<void> uploadImg() async {
-    setState(() {
-      isProcessing = true;
-    });
-    String? downloadLink;
-    try {
-      final Reference ref = _firebaseStorage.ref('banners/$fileName');
-      await ref.putData(fileBytes!).whenComplete(() async {
-        downloadLink = await ref.getDownloadURL();
+    if (fileBytes != null && fileName != null) {
+      setState(() {
+        isProcessing = true;
       });
 
-      await FirebaseFirestore.instance.collection('banners').doc(fileName).set(
-        {
-          'img_url': downloadLink,
-        },
-      ).whenComplete(() {
-        uploadDone();
+      await _controller.uploadImg(fileBytes!, fileName!);
+      setState(() {
+        isProcessing = false;
+        isImgSelected = false;
       });
-    } catch (e) {
-      uploadDone();
     }
   }
 
-  // action after deleting
   void doneDeleting() {
     Navigator.of(context).pop();
   }
 
-  // delete carousel banners
   Future<void> deleteCarousel(String id) async {
     Navigator.of(context).pop();
     EasyLoading.show(status: 'loading...');
 
-    try {
-      await _firebase.collection('banners').doc(id).delete().whenComplete(() {
-        EasyLoading.dismiss();
-      });
-    } catch (e) {}
+    await _controller.deleteCarousel(id);
+    EasyLoading.dismiss();
   }
 
-  // delete dialog
   void deleteDialog({required String id}) {
     areYouSureDialog(
       title: 'Delete Banner',
       content: 'Are you sure you want to delete this banner?',
       context: context,
-      action: deleteCarousel,
+      action: () => deleteCarousel(id),
       isIdInvolved: true,
       id: id,
     );
@@ -149,7 +121,9 @@ class _CarouselBannersState extends State<CarouselBanners> {
                   Text(
                     'Carousel Banners',
                     style: getMediumStyle(
-                        color: Colors.black, fontSize: FontSize.s16),
+                      color: Colors.black,
+                      fontSize: FontSize.s16,
+                    ),
                   ),
                 ],
               ),

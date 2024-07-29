@@ -4,13 +4,13 @@ import '../../constants/color.dart';
 
 class KListTile extends StatelessWidget {
   const KListTile({
-    Key? key,
+    super.key,
     required this.title,
     this.subtitle,
     required this.icon,
     this.onTapHandler,
     this.showSubtitle = true,
-  }) : super(key: key);
+  });
   final String title;
   final String? subtitle;
   final IconData icon;

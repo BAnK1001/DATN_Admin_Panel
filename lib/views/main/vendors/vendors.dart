@@ -9,7 +9,7 @@ import '../../../resources/font_manager.dart';
 import '../../../resources/styles_manager.dart';
 
 class VendorsScreen extends StatefulWidget {
-  const VendorsScreen({Key? key}) : super(key: key);
+  const VendorsScreen({super.key});
 
   @override
   State<VendorsScreen> createState() => _VendorsScreenState();
