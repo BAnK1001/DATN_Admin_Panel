@@ -1,7 +1,7 @@
-import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter_slidable/flutter_slidable.dart';
+import 'package:shoes_shop_admin/controllers/refund_controller.dart';
 import 'package:shoes_shop_admin/resources/assets_manager.dart';
 import 'package:shoes_shop_admin/resources/font_manager.dart';
 import 'package:shoes_shop_admin/resources/styles_manager.dart';
@@ -19,58 +19,12 @@ class RefundScreen extends StatefulWidget {
 class _RefundScreenState extends State<RefundScreen> {
   final ScrollController _scrollController = ScrollController();
   late Stream<QuerySnapshot> _refundsStream;
+  final RefundController _refundController = RefundController();
 
   @override
   void initState() {
     super.initState();
-    _refundsStream =
-        FirebaseFirestore.instance.collection('refunds').snapshots();
-  }
-
-  Future<String> getCustomerName(String customerId) async {
-    String customerName = '';
-
-    try {
-      DocumentSnapshot customerDoc = await FirebaseFirestore.instance
-          .collection('customers')
-          .doc(customerId)
-          .get();
-
-      customerName = customerDoc['fullname'];
-    } catch (e) {
-      if (kDebugMode) {
-        print('Error fetching customer name: $e');
-      }
-    }
-
-    return customerName;
-  }
-
-  Future<String> getVendorName(String vendorId) async {
-    String vendorName = '';
-
-    try {
-      DocumentSnapshot vendorDoc = await FirebaseFirestore.instance
-          .collection('vendors')
-          .doc(vendorId)
-          .get();
-
-      vendorName = vendorDoc['storeName'];
-    } catch (e) {
-      if (kDebugMode) {
-        print('Error fetching vendor name: $e');
-      }
-    }
-
-    return vendorName;
-  }
-
-  Future<void> _deleteRefund(String id) async {
-    await FirebaseFirestore.instance
-        .collection('refunds')
-        .doc(id)
-        .delete()
-        .whenComplete(() {});
+    _refundsStream = _refundController.getRefundsStream();
   }
 
   void _showDeleteDialog(String id) {
@@ -79,7 +33,7 @@ class _RefundScreenState extends State<RefundScreen> {
         title: 'Delete Refund',
         content: 'Are you sure you want to delete this refund?',
         context: context,
-        action: _deleteRefund,
+        action: (id) => _refundController.deleteRefund(id),
         isIdInvolved: true,
         id: id,
       );
@@ -140,7 +94,8 @@ class _RefundScreenState extends State<RefundScreen> {
                   itemBuilder: (context, index) {
                     var refund = sortedDocs[index];
                     return FutureBuilder<String>(
-                      future: getCustomerName(refund['customerId']),
+                      future: _refundController
+                          .getCustomerName(refund['customerId']),
                       builder:
                           (context, AsyncSnapshot<String> customerSnapshot) {
                         if (customerSnapshot.connectionState ==
@@ -153,7 +108,8 @@ class _RefundScreenState extends State<RefundScreen> {
                         }
 
                         return FutureBuilder<String>(
-                          future: getVendorName(refund['vendorId']),
+                          future: _refundController
+                              .getVendorName(refund['vendorId']),
                           builder:
                               (context, AsyncSnapshot<String> vendorSnapshot) {
                             if (vendorSnapshot.connectionState ==
@@ -166,8 +122,7 @@ class _RefundScreenState extends State<RefundScreen> {
                             }
 
                             return Padding(
-                              padding: const EdgeInsets.symmetric(
-                                  vertical: 2), // Reduced vertical padding
+                              padding: const EdgeInsets.symmetric(vertical: 2),
                               child: Slidable(
                                 startActionPane: ActionPane(
                                   motion: const ScrollMotion(),
@@ -197,9 +152,7 @@ class _RefundScreenState extends State<RefundScreen> {
                                 ),
                                 child: Card(
                                   margin: const EdgeInsets.symmetric(
-                                      vertical: 5, // Reduced vertical margin
-                                      horizontal:
-                                          10), // Reduced horizontal margin
+                                      vertical: 5, horizontal: 10),
                                   child: ListTile(
                                     onTap: () =>
                                         _navigateToRefundDetails(refund.id),

@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:intl/intl.dart' as intl;
+import 'package:shoes_shop_admin/controllers/product_controller.dart';
 import 'package:shoes_shop_admin/views/main/products/product_detail.dart';
-import 'package:shoes_shop_admin/views/widgets/are_you_sure_dialog.dart';
-import '../../widgets/loading_widget.dart';
+import 'package:shoes_shop_admin/views/widgets/loading_widget.dart';
 import '../../../constants/color.dart';
 import '../../../resources/assets_manager.dart';
 import '../../../resources/font_manager.dart';
@@ -20,47 +20,12 @@ class _ProductScreenState extends State<ProductScreen> {
   final ScrollController _scrollController = ScrollController();
   final TextEditingController _searchController = TextEditingController();
   late Stream<QuerySnapshot> _productStream;
+  final ProductController _productController = ProductController();
 
   @override
   void initState() {
     super.initState();
-    _productStream =
-        FirebaseFirestore.instance.collection('products').snapshots();
-  }
-
-  Future<void> toggleApproval(String id, bool status) async {
-    await FirebaseFirestore.instance
-        .collection('products')
-        .doc(id)
-        .update({'isApproved': !status});
-  }
-
-  void _navigateToProductDetail(String productId) {
-    Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (context) => ProductDetailScreen(productId: productId),
-      ),
-    );
-  }
-
-  Future<void> _deleteProduct(String id) async {
-    await FirebaseFirestore.instance
-        .collection('products')
-        .doc(id)
-        .delete()
-        .whenComplete(() {});
-  }
-
-  void _showDeleteDialog(String id) {
-    areYouSureDialog(
-      title: 'Delete Product',
-      content: 'Are you sure you want to delete this product?',
-      context: context,
-      action: _deleteProduct,
-      isIdInvolved: true,
-      id: id,
-    );
+    _productStream = _productController.getProductStream('');
   }
 
   @override
@@ -98,16 +63,17 @@ class _ProductScreenState extends State<ProductScreen> {
                 fillColor: Colors.grey[200],
                 suffixIcon: IconButton(
                   icon: const Icon(Icons.clear),
-                  onPressed: () => _searchController.clear(),
+                  onPressed: () {
+                    _searchController.clear();
+                    setState(() {
+                      _productStream = _productController.getProductStream('');
+                    });
+                  },
                 ),
               ),
               onChanged: (value) {
                 setState(() {
-                  _productStream = FirebaseFirestore.instance
-                      .collection('products')
-                      .where('productName', isGreaterThanOrEqualTo: value)
-                      .where('productName', isLessThan: '${value}z')
-                      .snapshots();
+                  _productStream = _productController.getProductStream(value);
                 });
               },
             ),
@@ -190,18 +156,26 @@ class _ProductScreenState extends State<ProductScreen> {
                                     ? primaryColor
                                     : accentColor,
                               ),
-                              onPressed: () => toggleApproval(
-                                  item['prodId'], item['isApproved']),
+                              onPressed: () =>
+                                  _productController.toggleApproval(
+                                      item['prodId'], item['isApproved']),
                             ),
                             IconButton(
                               icon: const Icon(Icons.delete, color: Colors.red),
-                              onPressed: () =>
-                                  _showDeleteDialog(item['prodId']),
+                              onPressed: () => _productController
+                                  .showDeleteDialog(context, item['prodId'],
+                                      deleteAction:
+                                          _productController.deleteProduct),
                             ),
                             IconButton(
                               icon: const Icon(Icons.info, color: Colors.blue),
-                              onPressed: () =>
-                                  _navigateToProductDetail(item['prodId']),
+                              onPressed: () => Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (context) => ProductDetailScreen(
+                                      productId: item['prodId']),
+                                ),
+                              ),
                             ),
                           ],
                         ),

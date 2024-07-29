@@ -1,6 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart' as intl;
+import 'package:shoes_shop_admin/controllers/cash_out_controller.dart';
 
 import '../../../constants/color.dart';
 import '../../../resources/assets_manager.dart';
@@ -18,52 +19,14 @@ class CashOutScreen extends StatefulWidget {
 
 class _CashOutScreenState extends State<CashOutScreen> {
   final ScrollController _scrollController = ScrollController();
-  late final Stream<QuerySnapshot> _cashOutStream =
-      FirebaseFirestore.instance.collection('cash_outs').snapshots();
-
-  Future<void> toggleApproval(
-      String id, bool status, double amount, String vendorId) async {
-    await FirebaseFirestore.instance.collection('cash_outs').doc(id).update(
-      {
-        'status': !status,
-      },
-    ).whenComplete(() async {
-      if (!status) {
-        await FirebaseFirestore.instance
-            .collection('vendors')
-            .doc(vendorId)
-            .update({
-          'balanceAvailable': FieldValue.increment(-amount),
-        });
-      } else {
-        await FirebaseFirestore.instance
-            .collection('vendors')
-            .doc(vendorId)
-            .update({
-          'balanceAvailable': FieldValue.increment(amount),
-        });
-      }
-
-      String message = status
-          ? 'The cash out has been approved successfully.'
-          : 'The cash out has been rejected successfully.';
-    });
-  }
-
-  Future<void> _deleteCashOut(String id) async {
-    await FirebaseFirestore.instance
-        .collection('cash_outs')
-        .doc(id)
-        .delete()
-        .whenComplete(() {});
-  }
+  final CashOutController _cashOutController = CashOutController();
 
   void _showDeleteDialog(String id) {
     areYouSureDialog(
       title: 'Delete Cash Out',
       content: 'Are you sure you want to delete this cash out?',
       context: context,
-      action: _deleteCashOut,
+      action: _cashOutController.deleteCashOut,
       isIdInvolved: true,
       id: id,
     );
@@ -91,7 +54,7 @@ class _CashOutScreenState extends State<CashOutScreen> {
           const SizedBox(height: 10),
           Expanded(
             child: StreamBuilder<QuerySnapshot>(
-              stream: _cashOutStream,
+              stream: _cashOutController.cashOutStream,
               builder: (context, AsyncSnapshot<QuerySnapshot> snapshot) {
                 if (snapshot.hasError) {
                   return const Center(child: Text('Error occurred!'));
@@ -166,7 +129,8 @@ class _CashOutScreenState extends State<CashOutScreen> {
                                 color:
                                     item['status'] ? primaryColor : accentColor,
                               ),
-                              onPressed: () => toggleApproval(
+                              onPressed: () =>
+                                  _cashOutController.toggleApproval(
                                 item.id,
                                 item['status'],
                                 item['amount'],

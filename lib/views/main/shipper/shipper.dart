@@ -1,5 +1,6 @@
-import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:shoes_shop_admin/controllers/shipper_controller.dart';
 import '../../../constants/color.dart';
 import '../../../resources/assets_manager.dart';
 import '../../../resources/font_manager.dart';
@@ -18,27 +19,18 @@ class _ShipperScreenState extends State<ShipperScreen> {
   final ScrollController _scrollController = ScrollController();
   final TextEditingController _searchController = TextEditingController();
   late Stream<QuerySnapshot> _shippersStream;
+  final ShipperController _shipperController = ShipperController();
 
   @override
   void initState() {
     super.initState();
-    _shippersStream =
-        FirebaseFirestore.instance.collection('shippers').snapshots();
+    _shippersStream = _shipperController.getShippersStream('');
   }
 
-  Future<void> _toggleApproval(String docId, bool currentStatus) async {
-    await FirebaseFirestore.instance
-        .collection('shippers')
-        .doc(docId)
-        .update({'isApproved': !currentStatus});
-  }
-
-  Future<void> _deleteShipper(String id) async {
-    await FirebaseFirestore.instance
-        .collection('shippers')
-        .doc(id)
-        .delete()
-        .whenComplete(() {});
+  void _onSearchChanged(String value) {
+    setState(() {
+      _shippersStream = _shipperController.getShippersStream(value);
+    });
   }
 
   void _showDeleteDialog(String id) {
@@ -46,7 +38,7 @@ class _ShipperScreenState extends State<ShipperScreen> {
       title: 'Delete Shipper',
       content: 'Are you sure you want to delete this shipper?',
       context: context,
-      action: _deleteShipper,
+      action: _shipperController.deleteShipper,
       isIdInvolved: true,
       id: id,
     );
@@ -87,18 +79,13 @@ class _ShipperScreenState extends State<ShipperScreen> {
                 fillColor: Colors.grey[200],
                 suffixIcon: IconButton(
                   icon: const Icon(Icons.clear),
-                  onPressed: () => _searchController.clear(),
+                  onPressed: () {
+                    _searchController.clear();
+                    _onSearchChanged('');
+                  },
                 ),
               ),
-              onChanged: (value) {
-                setState(() {
-                  _shippersStream = FirebaseFirestore.instance
-                      .collection('shippers')
-                      .where('fullname', isGreaterThanOrEqualTo: value)
-                      .where('fullname', isLessThan: '${value}z')
-                      .snapshots();
-                });
-              },
+              onChanged: _onSearchChanged,
             ),
           ),
           const SizedBox(height: 10),
@@ -182,8 +169,8 @@ class _ShipperScreenState extends State<ShipperScreen> {
                                     ? primaryColor
                                     : accentColor,
                               ),
-                              onPressed: () =>
-                                  _toggleApproval(item.id, item['isApproved']),
+                              onPressed: () => _shipperController
+                                  .toggleApproval(item.id, item['isApproved']),
                             ),
                             IconButton(
                               icon: const Icon(Icons.delete, color: Colors.red),

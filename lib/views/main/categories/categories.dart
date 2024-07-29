@@ -1,19 +1,16 @@
 import 'dart:typed_data';
-import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/material.dart';
+import 'package:file_picker/file_picker.dart';
+import 'package:shoes_shop_admin/controllers/categories_controller.dart';
 import 'package:shoes_shop_admin/helpers/screen_size.dart';
 import 'package:shoes_shop_admin/views/widgets/loading_widget.dart';
 import '../../../constants/color.dart';
-import '../../../constants/enums/status.dart';
 import '../../../resources/assets_manager.dart';
 import '../../../resources/font_manager.dart';
 import '../../../resources/styles_manager.dart';
-import 'package:file_picker/file_picker.dart';
 import '../../components/grid_categories.dart';
 import '../../widgets/are_you_sure_dialog.dart';
 import '../../widgets/msg_snackbar.dart';
-import 'package:flutter_easyloading/flutter_easyloading.dart';
 
 class CategoriesScreen extends StatefulWidget {
   const CategoriesScreen({super.key});
@@ -27,9 +24,8 @@ class _CategoriesScreenState extends State<CategoriesScreen> {
   Uint8List? fileBytes;
   String? fileName;
   bool isProcessing = false;
-  final FirebaseStorage _firebaseStorage = FirebaseStorage.instance;
-  final FirebaseFirestore _firebase = FirebaseFirestore.instance;
   final TextEditingController categoryName = TextEditingController();
+  final CategoriesController _categoriesController = CategoriesController();
 
   Future<void> selectImage() async {
     FilePickerResult? pickedImage = await FilePicker.platform.pickFiles(
@@ -61,47 +57,22 @@ class _CategoriesScreenState extends State<CategoriesScreen> {
   }
 
   Future<void> uploadCategory() async {
-    if (categoryName.text.isEmpty || categoryName.text.length < 4) {
-      displaySnackBar(
-        status: Status.error,
-        message: categoryName.text.isEmpty
-            ? 'Category name is empty'
-            : 'Category name is not valid',
-        context: context,
-      );
-      return;
-    }
-
     setState(() {
       isProcessing = true;
     });
 
-    try {
-      final Reference ref = _firebaseStorage.ref('categories/$fileName');
-      await ref.putData(fileBytes!).whenComplete(() async {
-        String downloadLink = await ref.getDownloadURL();
-        await _firebase.collection('categories').doc(fileName).set({
-          'img_url': downloadLink,
-          'category': categoryName.text.trim(),
-        });
-      });
-      uploadDone();
-    } catch (e) {
-      uploadDone();
-    }
+    await _categoriesController.uploadCategory(
+      fileBytes: fileBytes!,
+      fileName: fileName!,
+      categoryName: categoryName,
+      context: context,
+      uploadDone: uploadDone,
+      displaySnackBar: displaySnackBar,
+    );
   }
 
   void doneDeleting() {
     Navigator.of(context).pop();
-  }
-
-  Future<void> deleteCategory(String id) async {
-    EasyLoading.show(status: 'loading...');
-
-    try {
-      await _firebase.collection('categories').doc(id).delete();
-      EasyLoading.dismiss();
-    } catch (e) {}
   }
 
   void deleteDialog({required String id}) {
@@ -109,7 +80,7 @@ class _CategoriesScreenState extends State<CategoriesScreen> {
       title: 'Delete Category',
       content: 'Are you sure you want to delete this category?',
       context: context,
-      action: deleteCategory,
+      action: (context) => _categoriesController.deleteCategory(id, context),
       isIdInvolved: true,
       id: id,
     );

@@ -1,14 +1,15 @@
-import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
-import '../../../constants/color.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:shoes_shop_admin/constants/color.dart';
+import 'package:shoes_shop_admin/controllers/vendor_controller.dart';
+import 'package:shoes_shop_admin/views/widgets/are_you_sure_dialog.dart';
+import 'package:shoes_shop_admin/views/widgets/loading_widget.dart';
 import '../../../resources/assets_manager.dart';
 import '../../../resources/font_manager.dart';
 import '../../../resources/styles_manager.dart';
-import '../../widgets/are_you_sure_dialog.dart';
-import '../../widgets/loading_widget.dart';
 
 class VendorsScreen extends StatefulWidget {
-  const VendorsScreen({super.key});
+  const VendorsScreen({Key? key}) : super(key: key);
 
   @override
   State<VendorsScreen> createState() => _VendorsScreenState();
@@ -18,34 +19,18 @@ class _VendorsScreenState extends State<VendorsScreen> {
   final ScrollController _scrollController = ScrollController();
   final TextEditingController _searchController = TextEditingController();
   late Stream<QuerySnapshot> _vendorStream;
+  final VendorController _vendorController = VendorController();
 
   @override
   void initState() {
     super.initState();
-    _vendorStream =
-        FirebaseFirestore.instance.collection('vendors').snapshots();
+    _vendorStream = _vendorController.getVendorsStream('');
   }
 
-  doneWithAction() {
-    Navigator.of(context).pop();
-  }
-
-  Future<void> _toggleApproval(String docId, bool currentStatus) async {
-    await FirebaseFirestore.instance
-        .collection('vendors')
-        .doc(docId)
-        .update({'isApproved': !currentStatus});
-  }
-
-  Future<void> _banVendor(String docId) async {
-    try {
-      await FirebaseFirestore.instance
-          .collection('vendors')
-          .doc(docId)
-          .update({'isBanned': true});
-    } catch (e) {
-      doneWithAction();
-    }
+  void _onSearchChanged(String value) {
+    setState(() {
+      _vendorStream = _vendorController.getVendorsStream(value);
+    });
   }
 
   void _showDeleteDialog(String docId, String storeName) {
@@ -54,30 +39,11 @@ class _VendorsScreenState extends State<VendorsScreen> {
       content: 'Are you sure you want to delete this store?',
       context: context,
       action: () async {
-        await _deleteStore(docId);
+        await _vendorController.deleteStore(docId);
+        Navigator.of(context).pop();
       },
       isIdInvolved: false,
     );
-  }
-
-  Future<void> _deleteStore(String docId) async {
-    try {
-      await FirebaseFirestore.instance
-          .collection('vendors')
-          .doc(docId)
-          .delete();
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Store deleted successfully')),
-        );
-      }
-    } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error deleting store: $e')),
-        );
-      }
-    }
   }
 
   @override
@@ -115,18 +81,13 @@ class _VendorsScreenState extends State<VendorsScreen> {
                 fillColor: Colors.grey[200],
                 suffixIcon: IconButton(
                   icon: const Icon(Icons.clear),
-                  onPressed: () => _searchController.clear(),
+                  onPressed: () {
+                    _searchController.clear();
+                    _onSearchChanged('');
+                  },
                 ),
               ),
-              onChanged: (value) {
-                setState(() {
-                  _vendorStream = FirebaseFirestore.instance
-                      .collection('vendors')
-                      .where('storeName', isGreaterThanOrEqualTo: value)
-                      .where('storeName', isLessThan: '${value}z')
-                      .snapshots();
-                });
-              },
+              onChanged: _onSearchChanged,
             ),
           ),
           const SizedBox(height: 10),
@@ -207,14 +168,15 @@ class _VendorsScreenState extends State<VendorsScreen> {
                                     ? primaryColor
                                     : accentColor,
                               ),
-                              onPressed: () =>
-                                  _toggleApproval(item.id, item['isApproved']),
+                              onPressed: () => _vendorController.toggleApproval(
+                                  item.id, item['isApproved']),
                             ),
                             if (!isBanned)
                               IconButton(
                                 icon:
                                     const Icon(Icons.block, color: Colors.red),
-                                onPressed: () => _banVendor(item.id),
+                                onPressed: () =>
+                                    _vendorController.banVendor(item.id),
                               ),
                             IconButton(
                               icon: const Icon(Icons.delete, color: Colors.red),

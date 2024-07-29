@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:video_player/video_player.dart';
@@ -5,8 +6,7 @@ import 'package:video_player/video_player.dart';
 class RefundDetailsScreen extends StatefulWidget {
   final String refundId;
 
-  const RefundDetailsScreen({Key? key, required this.refundId})
-      : super(key: key);
+  const RefundDetailsScreen({super.key, required this.refundId});
 
   @override
   State<RefundDetailsScreen> createState() => _RefundDetailsScreenState();
@@ -50,7 +50,9 @@ class _RefundDetailsScreenState extends State<RefundDetailsScreen> {
         });
       }
     } catch (e) {
-      print('Error fetching additional data: $e');
+      if (kDebugMode) {
+        print('Error fetching additional data: $e');
+      }
     }
   }
 
@@ -134,7 +136,9 @@ class _RefundDetailsScreenState extends State<RefundDetailsScreen> {
         });
       });
     } catch (error) {
-      print('Error processing refund: $error');
+      if (kDebugMode) {
+        print('Error processing refund: $error');
+      }
     }
   }
 
@@ -246,7 +250,7 @@ class _RefundDetailsScreenState extends State<RefundDetailsScreen> {
                                     buildInfoRow('Status',
                                         getStatusText(refundData['status'])),
                                   ]),
-                                  SizedBox(height: 24),
+                                  const SizedBox(height: 24),
                                   buildInfoCard('Customer Information', [
                                     buildInfoRow(
                                         'Name',
@@ -256,7 +260,7 @@ class _RefundDetailsScreenState extends State<RefundDetailsScreen> {
                                     buildInfoRow(
                                         'ID', refundData['customerId']),
                                   ]),
-                                  SizedBox(height: 24),
+                                  const SizedBox(height: 24),
                                   buildInfoCard('Vendor Information', [
                                     buildInfoRow(
                                         'Name',
@@ -268,7 +272,7 @@ class _RefundDetailsScreenState extends State<RefundDetailsScreen> {
                                 ],
                               ),
                             ),
-                            SizedBox(width: 32),
+                            const SizedBox(width: 32),
                             Expanded(
                               child: Column(
                                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -278,10 +282,10 @@ class _RefundDetailsScreenState extends State<RefundDetailsScreen> {
                                     mediaUrl: refundData['mediaUrl'],
                                     videoController: _videoController,
                                   ),
-                                  SizedBox(height: 24),
+                                  const SizedBox(height: 24),
                                   buildVendorCheckNotification(
                                       refundData['isVendorCheck']),
-                                  SizedBox(height: 24),
+                                  const SizedBox(height: 24),
                                   buildActionButtons(refundData['status']),
                                 ],
                               ),
@@ -304,13 +308,14 @@ class _RefundDetailsScreenState extends State<RefundDetailsScreen> {
     return Card(
       elevation: 2,
       child: Padding(
-        padding: EdgeInsets.all(16),
+        padding: const EdgeInsets.all(16),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(title,
-                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
-            SizedBox(height: 16),
+                style:
+                    const TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+            const SizedBox(height: 16),
             ...children,
           ],
         ),
@@ -320,12 +325,12 @@ class _RefundDetailsScreenState extends State<RefundDetailsScreen> {
 
   Widget buildInfoRow(String label, String value) {
     return Padding(
-      padding: EdgeInsets.symmetric(vertical: 8),
+      padding: const EdgeInsets.symmetric(vertical: 8),
       child: Row(
         children: [
           Expanded(
-              child:
-                  Text(label, style: TextStyle(fontWeight: FontWeight.bold))),
+              child: Text(label,
+                  style: const TextStyle(fontWeight: FontWeight.bold))),
           Expanded(child: Text(value)),
         ],
       ),

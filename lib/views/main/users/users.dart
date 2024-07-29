@@ -1,5 +1,6 @@
-import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:shoes_shop_admin/controllers/user_controller.dart';
 import 'package:shoes_shop_admin/views/widgets/are_you_sure_dialog.dart';
 import 'package:shoes_shop_admin/views/widgets/loading_widget.dart';
 import '../../../resources/assets_manager.dart';
@@ -7,7 +8,7 @@ import '../../../resources/font_manager.dart';
 import '../../../resources/styles_manager.dart';
 
 class UsersScreen extends StatefulWidget {
-  const UsersScreen({Key? key}) : super(key: key);
+  const UsersScreen({super.key});
 
   @override
   State<UsersScreen> createState() => _UsersScreenState();
@@ -17,11 +18,18 @@ class _UsersScreenState extends State<UsersScreen> {
   final ScrollController _scrollController = ScrollController();
   final TextEditingController _searchController = TextEditingController();
   late Stream<QuerySnapshot> _usersStream;
+  final UserController _userController = UserController();
 
-  Future<void> _deleteCustomer(String id) async {
-    try {
-      await FirebaseFirestore.instance.collection('customers').doc(id).delete();
-    } catch (e) {}
+  @override
+  void initState() {
+    super.initState();
+    _usersStream = _userController.getUsersStream('');
+  }
+
+  void _onSearchChanged(String value) {
+    setState(() {
+      _usersStream = _userController.getUsersStream(value);
+    });
   }
 
   void _showDeleteDialog(String id) {
@@ -30,17 +38,10 @@ class _UsersScreenState extends State<UsersScreen> {
       content: 'Are you sure you want to delete this customer?',
       context: context,
       action: () async {
-        await _deleteCustomer(id);
+        await _userController.deleteCustomer(id);
       },
       isIdInvolved: false,
     );
-  }
-
-  @override
-  void initState() {
-    super.initState();
-    _usersStream =
-        FirebaseFirestore.instance.collection('customers').snapshots();
   }
 
   @override
@@ -78,18 +79,13 @@ class _UsersScreenState extends State<UsersScreen> {
                 fillColor: Colors.grey[200],
                 suffixIcon: IconButton(
                   icon: const Icon(Icons.clear),
-                  onPressed: () => _searchController.clear(),
+                  onPressed: () {
+                    _searchController.clear();
+                    _onSearchChanged('');
+                  },
                 ),
               ),
-              onChanged: (value) {
-                setState(() {
-                  _usersStream = FirebaseFirestore.instance
-                      .collection('customers')
-                      .where('fullname', isGreaterThanOrEqualTo: value)
-                      .where('fullname', isLessThan: value + 'z')
-                      .snapshots();
-                });
-              },
+              onChanged: _onSearchChanged,
             ),
           ),
           const SizedBox(height: 10),
