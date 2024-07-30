@@ -42,13 +42,11 @@ class CategoriesController {
     }
   }
 
-  Future<void> deleteCategory(String id, BuildContext context) async {
+  Future<void> deleteCategory(String id, BuildContext context) {
     EasyLoading.show(status: 'loading...');
-
-    try {
-      await _firebase.collection('categories').doc(id).delete();
+    return _firebase.collection('categories').doc(id).delete().then((_) {
       EasyLoading.dismiss();
-    } catch (e) {
+    }).catchError((e) {
       EasyLoading.dismiss();
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
@@ -56,6 +54,6 @@ class CategoriesController {
           backgroundColor: Colors.red,
         ),
       );
-    }
+    });
   }
 }

@@ -3,7 +3,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:shoes_shop_admin/views/main/refunds/refunds.dart';
 import 'package:shoes_shop_admin/views/main/shipper/shipper.dart';
-import 'package:shoes_shop_admin/views/main/users/users.dart';
+import 'package:shoes_shop_admin/views/main/users/users_screen.dart';
 import '../../controllers/route_manager.dart';
 import 'products/products.dart';
 import 'vendors/vendors.dart';
@@ -28,7 +28,7 @@ class MainScreen extends StatefulWidget {
 class _MainScreenState extends State<MainScreen> {
   var _pageIndex = 0;
   bool isLoading = true;
-  bool isDarkMode = false; // Thêm biến trạng thái Dark Mode
+  bool isDarkMode = false;
 
   final user = FirebaseAuth.instance.currentUser!;
 

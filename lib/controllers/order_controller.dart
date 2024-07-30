@@ -12,24 +12,29 @@ class OrdersController {
         .snapshots();
   }
 
-  Future<void> deleteOrder(BuildContext context, String orderId) async {
-    bool confirm = await _showConfirmationDialog(context);
-    if (confirm) {
-      try {
-        await _firebaseFirestore.collection('orders').doc(orderId).delete();
-        CoolAlert.show(
-          context: context,
-          type: CoolAlertType.success,
-          text: 'Order deleted successfully!',
-        );
-      } catch (e) {
-        CoolAlert.show(
-          context: context,
-          type: CoolAlertType.error,
-          text: 'Failed to delete order: $e',
-        );
+  Future<void> deleteOrder(BuildContext context, String orderId) {
+    return _showConfirmationDialog(context).then((confirm) {
+      if (confirm) {
+        return _firebaseFirestore
+            .collection('orders')
+            .doc(orderId)
+            .delete()
+            .then((_) {
+          CoolAlert.show(
+            context: context,
+            type: CoolAlertType.success,
+            text: 'Order deleted successfully!',
+          );
+        }).catchError((e) {
+          CoolAlert.show(
+            context: context,
+            type: CoolAlertType.error,
+            text: 'Failed to delete order: $e',
+          );
+        });
       }
-    }
+      return Future.value();
+    });
   }
 
   Future<bool> _showConfirmationDialog(BuildContext context) async {
@@ -56,23 +61,22 @@ class OrdersController {
   }
 
   Future<void> updateOrderStatus(
-      BuildContext context, String orderId, int newStatus) async {
-    try {
-      await _firebaseFirestore
-          .collection('orders')
-          .doc(orderId)
-          .update({'status': newStatus});
+      BuildContext context, String orderId, int newStatus) {
+    return _firebaseFirestore
+        .collection('orders')
+        .doc(orderId)
+        .update({'status': newStatus}).then((_) {
       CoolAlert.show(
         context: context,
         type: CoolAlertType.success,
         text: 'Order status updated successfully!',
       );
-    } catch (e) {
+    }).catchError((e) {
       CoolAlert.show(
         context: context,
         type: CoolAlertType.error,
         text: 'Failed to update order status: $e',
       );
-    }
+    });
   }
 }

@@ -40,7 +40,9 @@ class _VendorsScreenState extends State<VendorsScreen> {
       context: context,
       action: () async {
         await _vendorController.deleteStore(docId);
-        Navigator.of(context).pop();
+        if (mounted) {
+          Navigator.of(context).pop();
+        }
       },
       isIdInvolved: false,
     );

@@ -59,7 +59,7 @@ class _RefundScreenState extends State<RefundScreen> {
           Wrap(
             crossAxisAlignment: WrapCrossAlignment.center,
             children: [
-              const Icon(Icons.money_off, color: Colors.green),
+              const Icon(Icons.money_off, color: Colors.black),
               const SizedBox(width: 10),
               Text(
                 'Refunds',

@@ -57,52 +57,65 @@ class _RefundDetailsScreenState extends State<RefundDetailsScreen> {
   }
 
   Future<void> updateRefundStatus(
-      BuildContext context, String refundId, int newStatus) async {
-    try {
-      DocumentSnapshot refundSnapshot = await FirebaseFirestore.instance
-          .collection('refunds')
-          .doc(refundId)
-          .get();
-
+      BuildContext context, String refundId, int newStatus) {
+    // Start by fetching the refund document
+    return FirebaseFirestore.instance
+        .collection('refunds')
+        .doc(refundId)
+        .get()
+        .then((refundSnapshot) {
       if (refundSnapshot.exists) {
         int currentStatus = refundSnapshot['status'];
         if (newStatus == 1 && currentStatus != 1) {
-          await FirebaseFirestore.instance
+          // Update refund status and set admin check
+          return FirebaseFirestore.instance
               .collection('refunds')
               .doc(refundId)
-              .update({'status': newStatus, 'isAdminCheck': true});
+              .update({'status': newStatus, 'isAdminCheck': true}).then((_) {
+            // Process the refund
+            return processRefund(refundSnapshot['customerId'],
+                    refundSnapshot['amount'], refundId)
+                .then((_) {
+              // Show success message
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(
+                  content:
+                      Text('Status updated successfully and refund processed!'),
+                ),
+              );
 
-          // Call the method to process the refund
-          await processRefund(
-              refundSnapshot['customerId'], refundSnapshot['amount'], refundId);
-
-          // Show a success message
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-                content:
-                    Text('Status updated successfully and refund processed!')),
-          );
-
-          // Refresh refund details
-          setState(() {
-            _refundDetails = getRefundDetails();
+              // Refresh refund details
+              setState(() {
+                _refundDetails = getRefundDetails();
+              });
+            });
           });
         } else {
+          // Show message if status update is not allowed
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
-                content: Text('Unable to update status to Approved.')),
+              content: Text('Unable to update status to Approved.'),
+            ),
           );
+          return Future.value(); // Return an empty future
         }
       } else {
+        // Show message if refund document does not exist
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Refund document does not exist.')),
+          const SnackBar(
+            content: Text('Refund document does not exist.'),
+          ),
         );
+        return Future.value(); // Return an empty future
       }
-    } catch (e) {
+    }).catchError((e) {
+      // Handle errors
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Error updating status: $e')),
+        SnackBar(
+          content: Text('Error updating status: $e'),
+        ),
       );
-    }
+    });
   }
 
   Future<void> processRefund(
